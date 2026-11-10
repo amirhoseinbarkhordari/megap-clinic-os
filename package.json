@@ -1,0 +1,24 @@
+{
+  "name": "megap-clinic-os",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "dotenv -e .env -- turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify:premium": "node scripts/verify-premium.mjs"
+  },
+  "devDependencies": {
+    "dotenv-cli": "8.0.0",
+    "prettier": "3.6.2",
+    "turbo": "2.5.8",
+    "typescript": "5.9.3"
+  }
+}
