@@ -5,9 +5,10 @@ import { AuthModule } from "./auth/auth.module";
 import { APP_GUARD } from "@nestjs/core";
 import { TenantContextGuard } from "./auth/tenant-context";
 import { PatientsModule } from "./patients/patients.module";
+import { SchedulingModule } from "./scheduling/scheduling.module";
 
 @Module({
-  imports: [DatabaseModule, AuthModule, HealthModule, PatientsModule],
+  imports: [DatabaseModule, AuthModule, HealthModule, PatientsModule, SchedulingModule],
   providers: [{ provide: APP_GUARD, useClass: TenantContextGuard }],
 })
 export class AppModule {}

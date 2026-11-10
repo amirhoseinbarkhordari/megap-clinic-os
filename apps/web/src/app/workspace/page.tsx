@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../lib/auth-context";
-import { networkErrorMessage } from "../../lib/api-error";
+import { ApiError, networkErrorMessage } from "../../lib/api-error";
 import { TextField } from "../../components/text-field";
 
 type Patient = {
@@ -15,6 +15,22 @@ type Patient = {
   createdAt: string;
 };
 type PatientPage = { items: Patient[]; page: number; limit: number; total: number };
+type Staff = { id: string; displayName: string; branchId: string | null };
+type ClinicService = {
+  id: string;
+  name: string;
+  durationMinutes: number;
+  priceRial: string;
+};
+type Appointment = {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  status: "BOOKED" | "CONFIRMED" | "COMPLETED" | "CANCELED" | "NO_SHOW";
+  patient: { id: string; fullName: string; phone: string | null };
+  staff: { id: string; displayName: string };
+  service: { id: string; name: string; durationMinutes: number };
+};
 const PAGE_SIZE = 20;
 
 function formatDate(value: string) {
@@ -28,6 +44,37 @@ function formatDate(value: string) {
 
 function formatDigits(value: number) {
   return new Intl.NumberFormat("fa-IR").format(value);
+}
+
+function formatAppointmentDate(value: string) {
+  return new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Tehran",
+  }).format(new Date(value));
+}
+
+function tehranDateTimeToIso(value: string) {
+  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})$/.exec(value);
+  if (!match) throw new Error("تاریخ و ساعت نوبت را کامل وارد کنید.");
+  return new Date(`${match[1]}T${match[2]}:00+03:30`).toISOString();
+}
+
+function normalizeIntegerInput(value: string) {
+  return value
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/\D/g, "");
+}
+
+function schedulingErrorMessage(error: unknown) {
+  if (error instanceof ApiError && error.status === 409) {
+    return "این زمان برای درمانگر در دسترس نیست؛ نوبت‌ها را تازه‌سازی کنید.";
+  }
+  return networkErrorMessage(error);
 }
 
 export default function WorkspacePage() {
@@ -48,6 +95,49 @@ export default function WorkspacePage() {
   const [signOutError, setSignOutError] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
   const createFormRef = useRef<HTMLFormElement>(null);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [services, setServices] = useState<ClinicService[]>([]);
+  const [appointmentPatients, setAppointmentPatients] = useState<Patient[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [scheduleState, setScheduleState] = useState<"loading" | "ready" | "error">("loading");
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [scheduleMutationError, setScheduleMutationError] = useState<string | null>(null);
+  const [scheduleNotice, setScheduleNotice] = useState<string | null>(null);
+  const [scheduleBusy, setScheduleBusy] = useState(false);
+  const [scheduleReload, setScheduleReload] = useState(0);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let active = true;
+    const loadingTimer = window.setTimeout(() => {
+      setScheduleState("loading");
+      setScheduleError(null);
+    }, 0);
+    const from = new Date().toISOString();
+    void Promise.all([
+      request<Staff[]>("/staff"),
+      request<ClinicService[]>("/services"),
+      request<PatientPage>("/patients?page=1&limit=100"),
+      request<Appointment[]>(`/appointments?from=${encodeURIComponent(from)}&limit=50`),
+    ])
+      .then(([staffRows, serviceRows, patientPage, appointmentRows]) => {
+        if (!active) return;
+        setStaff(staffRows);
+        setServices(serviceRows);
+        setAppointmentPatients(patientPage.items);
+        setAppointments(appointmentRows);
+        setScheduleState("ready");
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setScheduleError(networkErrorMessage(error));
+        setScheduleState("error");
+      });
+    return () => {
+      active = false;
+      window.clearTimeout(loadingTimer);
+    };
+  }, [request, scheduleReload, status]);
 
   useEffect(() => {
     if (composing) return;
@@ -120,10 +210,11 @@ export default function WorkspacePage() {
       return;
     }
     try {
-      await request<Patient>("/patients", {
+      const created = await request<Patient>("/patients", {
         method: "POST",
         body: JSON.stringify({ fullName, phone: phone || undefined }),
       });
+      setAppointmentPatients((current) => [created, ...current].slice(0, 100));
       form.reset();
       setQueryDraft("");
       setSearch("");
@@ -137,6 +228,142 @@ export default function WorkspacePage() {
     }
   }
 
+  async function createStaff(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (scheduleBusy || status !== "authenticated") return;
+    const form = event.currentTarget;
+    const name = String(new FormData(form).get("staffName") ?? "").trim();
+    if (name.length < 2 || name.length > 160) {
+      setScheduleMutationError("نام درمانگر را کامل وارد کنید.");
+      return;
+    }
+    setScheduleBusy(true);
+    setScheduleMutationError(null);
+    setScheduleNotice(null);
+    try {
+      const created = await request<Staff>("/staff", {
+        method: "POST",
+        body: JSON.stringify({ displayName: name }),
+      });
+      setStaff((current) =>
+        [...current, created].sort((a, b) => a.displayName.localeCompare(b.displayName, "fa")),
+      );
+      form.reset();
+      setScheduleNotice("درمانگر اضافه شد.");
+    } catch (error) {
+      setScheduleMutationError(schedulingErrorMessage(error));
+    } finally {
+      setScheduleBusy(false);
+    }
+  }
+
+  async function createService(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (scheduleBusy || status !== "authenticated") return;
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    const name = String(values.get("serviceName") ?? "").trim();
+    const durationMinutes = Number(values.get("durationMinutes"));
+    const priceRial = normalizeIntegerInput(String(values.get("priceRial") ?? "0"));
+    if (
+      name.length < 2 ||
+      name.length > 160 ||
+      !Number.isInteger(durationMinutes) ||
+      durationMinutes < 5 ||
+      durationMinutes > 1440
+    ) {
+      setScheduleMutationError("نام خدمت و مدت معتبر را وارد کنید.");
+      return;
+    }
+    setScheduleBusy(true);
+    setScheduleMutationError(null);
+    setScheduleNotice(null);
+    try {
+      const created = await request<ClinicService>("/services", {
+        method: "POST",
+        body: JSON.stringify({ name, durationMinutes, priceRial }),
+      });
+      setServices((current) =>
+        [...current, created].sort((a, b) => a.name.localeCompare(b.name, "fa")),
+      );
+      form.reset();
+      setScheduleNotice("خدمت به فهرست اضافه شد.");
+    } catch (error) {
+      setScheduleMutationError(schedulingErrorMessage(error));
+    } finally {
+      setScheduleBusy(false);
+    }
+  }
+
+  async function createAppointment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (scheduleBusy || status !== "authenticated") return;
+    const form = event.currentTarget;
+    const values = new FormData(form);
+    const patientId = String(values.get("patientId") ?? "");
+    const staffId = String(values.get("staffId") ?? "");
+    const serviceId = String(values.get("serviceId") ?? "");
+    const startsAt = String(values.get("startsAt") ?? "");
+    if (!patientId || !staffId || !serviceId || !startsAt) {
+      setScheduleMutationError("مراجع، درمانگر، خدمت و زمان نوبت را انتخاب کنید.");
+      return;
+    }
+    let normalizedStartsAt: string;
+    try {
+      normalizedStartsAt = tehranDateTimeToIso(startsAt);
+    } catch {
+      setScheduleMutationError("تاریخ و ساعت نوبت را به‌درستی وارد کنید.");
+      return;
+    }
+    setScheduleBusy(true);
+    setScheduleMutationError(null);
+    setScheduleNotice(null);
+    try {
+      const created = await request<Appointment>("/appointments", {
+        method: "POST",
+        body: JSON.stringify({
+          patientId,
+          staffId,
+          serviceId,
+          startsAt: normalizedStartsAt,
+        }),
+      });
+      setAppointments((current) =>
+        [...current, created].sort((a, b) => a.startsAt.localeCompare(b.startsAt)),
+      );
+      form.reset();
+      setScheduleNotice("نوبت ثبت شد.");
+    } catch (error) {
+      setScheduleMutationError(schedulingErrorMessage(error));
+    } finally {
+      setScheduleBusy(false);
+    }
+  }
+
+  async function updateAppointmentStatus(
+    appointment: Appointment,
+    nextStatus: "CONFIRMED" | "COMPLETED" | "CANCELED" | "NO_SHOW",
+  ) {
+    if (scheduleBusy) return;
+    setScheduleBusy(true);
+    setScheduleMutationError(null);
+    setScheduleNotice(null);
+    try {
+      const updated = await request<Appointment>(`/appointments/${appointment.id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      setAppointments((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setScheduleNotice("وضعیت نوبت به‌روزرسانی شد.");
+    } catch (error) {
+      setScheduleMutationError(schedulingErrorMessage(error));
+    } finally {
+      setScheduleBusy(false);
+    }
+  }
+
   async function handleSignOut() {
     if (signingOut) return;
     setSigningOut(true);
@@ -145,6 +372,10 @@ export default function WorkspacePage() {
       await signOut();
       setPatients([]);
       setTotal(0);
+      setAppointmentPatients([]);
+      setAppointments([]);
+      setStaff([]);
+      setServices([]);
       router.replace("/login");
     } catch {
       setSignOutError("خروج از حساب انجام نشد. اتصال را بررسی کنید و دوباره تلاش کنید.");
@@ -176,9 +407,9 @@ export default function WorkspacePage() {
           <span className="workspace-nav-current" aria-current="page">
             <span aria-hidden="true">◉</span> مراجعان
           </span>
-          <span className="workspace-nav-unavailable" aria-disabled="true">
-            <span aria-hidden="true">◷</span> نوبت‌دهی <small>به‌زودی</small>
-          </span>
+          <Link className="workspace-nav-unavailable" href="#schedule-title">
+            <span aria-hidden="true">◷</span> نوبت‌دهی
+          </Link>
           <span className="workspace-nav-unavailable" aria-disabled="true">
             <span aria-hidden="true">▤</span> پرونده‌ی درمان <small>به‌زودی</small>
           </span>
@@ -444,6 +675,324 @@ export default function WorkspacePage() {
               </p>
             </section>
           </div>
+
+          <section className="content-card schedule-section" aria-labelledby="schedule-title">
+            <div className="card-heading schedule-heading">
+              <div>
+                <span className="auth-index">مدیریت برنامه‌ی کلینیک</span>
+                <h2 id="schedule-title">نوبت‌دهی</h2>
+                <p>درمانگر و خدمت را تعریف کنید، سپس برای مراجعه‌کننده نوبت ثبت کنید.</p>
+              </div>
+              <button
+                className="button button-outline"
+                type="button"
+                onClick={() => setScheduleReload((value) => value + 1)}
+                disabled={!authenticated || scheduleState === "loading"}
+              >
+                تازه‌سازی
+              </button>
+            </div>
+
+            {scheduleMutationError ? (
+              <div className="auth-banner auth-banner-error" role="alert">
+                {scheduleMutationError}
+              </div>
+            ) : null}
+            {scheduleNotice ? (
+              <div className="auth-banner auth-banner-success" role="status" aria-live="polite">
+                {scheduleNotice}
+              </div>
+            ) : null}
+
+            {scheduleState === "loading" ? (
+              <div className="patient-list-state" role="status" aria-live="polite">
+                <span className="inline-spinner" aria-hidden="true" />
+                <span>در حال دریافت برنامه‌ی کلینیک…</span>
+              </div>
+            ) : scheduleState === "error" ? (
+              <div className="patient-list-state patient-list-error" role="alert">
+                <p>{scheduleError}</p>
+                <button
+                  className="button button-outline"
+                  type="button"
+                  onClick={() => setScheduleReload((value) => value + 1)}
+                >
+                  تلاش دوباره
+                </button>
+              </div>
+            ) : !authenticated ? (
+              <div className="patient-list-state">برای دیدن نوبت‌ها دوباره وارد شوید.</div>
+            ) : (
+              <>
+                <div className="schedule-setup-grid">
+                  <form className="schedule-setup-card" noValidate onSubmit={createStaff}>
+                    <h3>درمانگرها</h3>
+                    <TextField
+                      id="staff-name"
+                      name="staffName"
+                      label="نام درمانگر"
+                      autoComplete="name"
+                      maxLength={160}
+                      required
+                      disabled={scheduleBusy}
+                    />
+                    <button className="button button-outline" type="submit" disabled={scheduleBusy}>
+                      افزودن درمانگر
+                    </button>
+                    <ul className="schedule-catalog-list">
+                      {staff.map((item) => (
+                        <li key={item.id}>{item.displayName}</li>
+                      ))}
+                      {staff.length === 0 ? (
+                        <li className="schedule-muted">هنوز درمانگری ثبت نشده</li>
+                      ) : null}
+                    </ul>
+                  </form>
+
+                  <form className="schedule-setup-card" noValidate onSubmit={createService}>
+                    <h3>خدمات کلینیک</h3>
+                    <TextField
+                      id="service-name"
+                      name="serviceName"
+                      label="نام خدمت"
+                      maxLength={160}
+                      required
+                      disabled={scheduleBusy}
+                    />
+                    <div className="schedule-two-fields">
+                      <TextField
+                        id="service-duration"
+                        name="durationMinutes"
+                        label="مدت (دقیقه)"
+                        type="number"
+                        min={5}
+                        max={1440}
+                        required
+                        disabled={scheduleBusy}
+                      />
+                      <TextField
+                        id="service-price"
+                        name="priceRial"
+                        label="هزینه (ریال)"
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={15}
+                        disabled={scheduleBusy}
+                      />
+                    </div>
+                    <button className="button button-outline" type="submit" disabled={scheduleBusy}>
+                      افزودن خدمت
+                    </button>
+                    <ul className="schedule-catalog-list">
+                      {services.map((item) => (
+                        <li key={item.id}>
+                          {item.name} <span>{formatDigits(item.durationMinutes)} دقیقه</span>
+                        </li>
+                      ))}
+                      {services.length === 0 ? (
+                        <li className="schedule-muted">هنوز خدمتی ثبت نشده</li>
+                      ) : null}
+                    </ul>
+                  </form>
+                </div>
+
+                <form className="schedule-booking-form" noValidate onSubmit={createAppointment}>
+                  <h3>ثبت نوبت</h3>
+                  <div className="schedule-booking-fields">
+                    <label className="schedule-field" htmlFor="appointment-patient">
+                      <span>مراجع</span>
+                      <select
+                        id="appointment-patient"
+                        name="patientId"
+                        required
+                        disabled={scheduleBusy || appointmentPatients.length === 0}
+                      >
+                        <option value="">انتخاب مراجع</option>
+                        {appointmentPatients.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="schedule-field" htmlFor="appointment-staff">
+                      <span>درمانگر</span>
+                      <select
+                        id="appointment-staff"
+                        name="staffId"
+                        required
+                        disabled={scheduleBusy || staff.length === 0}
+                      >
+                        <option value="">انتخاب درمانگر</option>
+                        {staff.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.displayName}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="schedule-field" htmlFor="appointment-service">
+                      <span>خدمت</span>
+                      <select
+                        id="appointment-service"
+                        name="serviceId"
+                        required
+                        disabled={scheduleBusy || services.length === 0}
+                      >
+                        <option value="">انتخاب خدمت</option>
+                        {services.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name} · {formatDigits(item.durationMinutes)} دقیقه
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="schedule-field" htmlFor="appointment-starts-at">
+                      <span>تاریخ و ساعت (تهران)</span>
+                      <input
+                        id="appointment-starts-at"
+                        name="startsAt"
+                        type="datetime-local"
+                        required
+                        disabled={scheduleBusy}
+                      />
+                    </label>
+                    <button
+                      className="button button-primary schedule-submit"
+                      type="submit"
+                      disabled={
+                        scheduleBusy ||
+                        appointmentPatients.length === 0 ||
+                        staff.length === 0 ||
+                        services.length === 0
+                      }
+                    >
+                      ثبت نوبت
+                    </button>
+                  </div>
+                  {appointmentPatients.length === 0 ? (
+                    <p className="schedule-help">برای ثبت نوبت ابتدا یک مراجع اضافه کنید.</p>
+                  ) : null}
+                  {staff.length === 0 || services.length === 0 ? (
+                    <p className="schedule-help">
+                      برای فعال‌شدن فرم، درمانگر و خدمت را در فهرست بالا تعریف کنید.
+                    </p>
+                  ) : null}
+                </form>
+
+                <div className="schedule-appointments">
+                  <div className="card-heading">
+                    <div>
+                      <h3>نوبت‌های پیش‌رو</h3>
+                      <p>تا ۵۰ نوبت آینده</p>
+                    </div>
+                    <span className="patient-count">{formatDigits(appointments.length)} نوبت</span>
+                  </div>
+                  {appointments.length === 0 ? (
+                    <div className="patient-list-state patient-list-empty">
+                      برای این بازه نوبتی ثبت نشده است.
+                    </div>
+                  ) : (
+                    <div className="table-scroll patient-table-scroll">
+                      <table className="data-table patient-workspace-table schedule-table">
+                        <caption className="visually-hidden">فهرست نوبت‌های آینده</caption>
+                        <thead>
+                          <tr>
+                            <th scope="col">زمان</th>
+                            <th scope="col">مراجع</th>
+                            <th scope="col">درمانگر</th>
+                            <th scope="col">خدمت</th>
+                            <th scope="col">وضعیت</th>
+                            <th scope="col">عملیات</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {appointments.map((item) => (
+                            <tr key={item.id}>
+                              <td>{formatAppointmentDate(item.startsAt)}</td>
+                              <th scope="row">{item.patient.fullName}</th>
+                              <td>{item.staff.displayName}</td>
+                              <td>{item.service.name}</td>
+                              <td>
+                                <span
+                                  className={`appointment-status appointment-status-${item.status.toLowerCase()}`}
+                                >
+                                  {
+                                    {
+                                      BOOKED: "ثبت‌شده",
+                                      CONFIRMED: "تأییدشده",
+                                      COMPLETED: "انجام‌شده",
+                                      CANCELED: "لغوشده",
+                                      NO_SHOW: "عدم مراجعه",
+                                    }[item.status]
+                                  }
+                                </span>
+                              </td>
+                              <td className="schedule-actions">
+                                {item.status === "BOOKED" ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="schedule-action"
+                                      disabled={scheduleBusy}
+                                      onClick={() =>
+                                        void updateAppointmentStatus(item, "CONFIRMED")
+                                      }
+                                    >
+                                      تأیید
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="schedule-action schedule-action-danger"
+                                      disabled={scheduleBusy}
+                                      onClick={() => void updateAppointmentStatus(item, "CANCELED")}
+                                    >
+                                      لغو
+                                    </button>
+                                  </>
+                                ) : item.status === "CONFIRMED" ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      className="schedule-action"
+                                      disabled={scheduleBusy}
+                                      onClick={() =>
+                                        void updateAppointmentStatus(item, "COMPLETED")
+                                      }
+                                    >
+                                      انجام شد
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="schedule-action"
+                                      disabled={scheduleBusy}
+                                      onClick={() => void updateAppointmentStatus(item, "NO_SHOW")}
+                                    >
+                                      عدم مراجعه
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="schedule-action schedule-action-danger"
+                                      disabled={scheduleBusy}
+                                      onClick={() => void updateAppointmentStatus(item, "CANCELED")}
+                                    >
+                                      لغو
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span className="schedule-muted">—</span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
         </main>
       </div>
     </div>

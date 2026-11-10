@@ -66,7 +66,13 @@ export class AuthService {
         const role = await tx.role.create({
           data: { tenantId: tenant.id, name: "مالک", key: "owner", isSystem: true },
         });
-        const permissions = ["clinic.manage", "members.manage", "patients.manage"];
+        const permissions = [
+          "clinic.manage",
+          "members.manage",
+          "patients.manage",
+          "appointments.manage",
+          "catalog.manage",
+        ];
         await tx.permission.createMany({
           data: permissions.map((key) => ({ key, description: key })),
           skipDuplicates: true,

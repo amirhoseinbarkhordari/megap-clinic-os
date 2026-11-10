@@ -29,7 +29,7 @@ RTL layout, design tokens, shared form components, login/registration, in-memory
 
 ## Phase 4 — Clinic operations MVP
 
-Staff, patient CRM, services, schedules, appointment lifecycle and database-enforced conflict protection.
+Staff and service catalog APIs, patient CRM, appointment creation/list/status lifecycle, tenant-scoped scheduling records, basic booking UI, and database-enforced conflict protection are implemented. Staff working-hour calendars, rescheduling, and end-to-end browser verification remain open.
 
 ## Phase 5 — Medical records
 

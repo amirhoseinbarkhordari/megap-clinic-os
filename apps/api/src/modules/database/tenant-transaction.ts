@@ -8,10 +8,14 @@ export async function withTenantTransaction<T>(
   prisma: PrismaService,
   tenantId: string,
   work: (tx: Prisma.TransactionClient) => Promise<T>,
+  options: { maxWait?: number; timeout?: number } = {},
 ): Promise<T> {
   if (!UUID_PATTERN.test(tenantId)) throw new Error("Invalid authenticated tenant context.");
-  return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
-    return work(tx);
-  });
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
+      return work(tx);
+    },
+    { maxWait: options.maxWait ?? 5_000, timeout: options.timeout ?? 10_000 },
+  );
 }

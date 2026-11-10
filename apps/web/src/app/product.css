@@ -281,6 +281,10 @@
 .workspace-nav-unavailable {
   color: #8a928e;
 }
+.workspace-nav-unavailable[href] {
+  color: var(--green);
+  cursor: pointer;
+}
 .workspace-nav-unavailable small {
   margin-inline-start: auto;
   color: var(--muted);
@@ -552,6 +556,188 @@
 .patient-create-card .card-heading {
   margin-bottom: 18px;
 }
+
+.schedule-section {
+  display: grid;
+  gap: 1.35rem;
+  margin-top: 1.25rem;
+}
+
+.schedule-heading {
+  align-items: flex-start;
+}
+
+.schedule-heading h2,
+.schedule-appointments h3,
+.schedule-setup-card h3,
+.schedule-booking-form h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.schedule-heading p,
+.schedule-appointments .card-heading p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
+.schedule-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.schedule-setup-card,
+.schedule-booking-form {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.schedule-setup-card > .button {
+  justify-self: start;
+  min-height: 2.5rem;
+}
+
+.schedule-two-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.schedule-catalog-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+  font-size: 0.875rem;
+}
+
+.schedule-catalog-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--text);
+}
+
+.schedule-catalog-list li span,
+.schedule-muted,
+.schedule-help {
+  color: var(--muted);
+}
+
+.schedule-booking-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: end;
+  gap: 0.75rem;
+}
+
+.schedule-field {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.schedule-field select,
+.schedule-field input {
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.schedule-field select:focus-visible,
+.schedule-field input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--green) 30%, transparent);
+  outline-offset: 2px;
+  border-color: var(--green);
+}
+
+.schedule-submit {
+  min-height: 2.85rem;
+  white-space: nowrap;
+}
+
+.schedule-help {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.schedule-appointments {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.schedule-appointments .card-heading {
+  margin: 0;
+}
+
+.schedule-table {
+  min-width: 850px;
+}
+
+.appointment-status {
+  display: inline-flex;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green);
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.appointment-status-canceled,
+.appointment-status-no_show {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.appointment-status-completed {
+  background: var(--surface-muted, var(--paper));
+  color: var(--muted);
+}
+
+.schedule-actions {
+  white-space: nowrap;
+}
+
+.schedule-action {
+  padding: 0.3rem 0.4rem;
+  border: 0;
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.8rem;
+}
+
+.schedule-action-danger {
+  color: var(--danger);
+}
+
+.schedule-action:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
 .patient-create-form {
   gap: 13px;
 }
@@ -611,6 +797,10 @@
   .patient-list-card,
   .patient-create-card {
     padding: 17px;
+  }
+
+  .schedule-booking-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 900px) {
@@ -724,6 +914,21 @@
   .patient-pagination {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .schedule-setup-grid,
+  .schedule-two-fields,
+  .schedule-booking-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .schedule-section {
+    padding: 1rem;
+  }
+
+  .schedule-setup-card,
+  .schedule-booking-form {
+    padding: 0.85rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {

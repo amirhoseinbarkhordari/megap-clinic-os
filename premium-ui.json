@@ -3,7 +3,7 @@
   "sourceRoots": ["apps/web/src"],
   "locale": "fa-IR",
   "canonicalMap": "UX-CONTRACT.md",
-  "requiredCapabilities": ["Form", "CRUD"],
+  "requiredCapabilities": ["Form", "CRUD", "Date", "Select/Listbox"],
   "ownership": {
     "Authentication and session state": "apps/web/src/lib/auth-context.tsx",
     "Text input": "apps/web/src/components/text-field.tsx",

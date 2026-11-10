@@ -10,6 +10,8 @@
   --gold: #c7a66a;
   --danger: #9b463c;
   --danger-soft: #faefed;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
   --font-persian: "Vazirmatn", Tahoma, sans-serif;
 }
 
