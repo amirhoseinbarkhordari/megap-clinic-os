@@ -20,7 +20,13 @@ Merge the key into the existing JSON object. Docker's `registry-mirrors` applies
 
 ## Start local dependencies
 
-Copy `.env.example` to `.env`, set `JWT_ACCESS_SECRET` to a random secret of at least 32 characters, then run:
+Copy `.env.example` to `.env`. Set `JWT_ACCESS_SECRET` to a random secret of at least 32 characters. Generate a separate PHI key and put the resulting JSON into `MEGAP_PHI_ENCRYPTION_KEYS` (do not commit either secret):
+
+```powershell
+node -e "console.log(JSON.stringify({v1:require('node:crypto').randomBytes(32).toString('base64')}))"
+```
+
+Keep a protected backup of each PHI key. Losing a key makes its encrypted clinical notes unrecoverable. To rotate, add a new version while retaining all old versions, set the new active version, and only remove an old version after a reviewed re-encryption process confirms no records still use it. Then run:
 
 ```powershell
 docker compose up -d

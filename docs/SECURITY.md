@@ -9,6 +9,9 @@
 - Tenant-owned tables use PostgreSQL RLS with forced row security. Tenant scope is installed transaction-locally by `withTenantTransaction`; composite foreign keys bind memberships, roles, branches, and patients to the same tenant.
 - Patient routes require the `patients.manage` permission. Patient queries are tenant-scoped both in Prisma filters and at the PostgreSQL RLS layer; optional branch assignment is constrained by a composite tenant foreign key.
 - Registration creates a clinic, owner membership, first branch, permissions, and a 14-day trial atomically.
+- Clinical note bodies use AES-256-GCM application-layer encryption with per-record associated data binding tenant, patient, encounter, and note identifiers. Versioned keys are supplied by environment; ciphertext, nonce, authentication tag, and key version are stored in PostgreSQL.
+- Clinical encounters, notes, consents, and access-audit events have forced tenant RLS. Clinical notes and access-audit rows are append-only at the database layer. Consent rows allow a single revocation update and no deletion.
+- Record reads and writes create tenant-scoped patient audit events in the same transaction. Consent has a partial unique constraint for one active consent per patient and kind.
 
 ## Database roles and production deployment
 
@@ -18,4 +21,4 @@ The membership RLS policy allows transaction-local `app.user_id` while resolving
 
 ## Not implemented yet
 
-Phone/email verification, password reset, MFA, account recovery, Redis-backed rate limiting, audit history, per-device session management, external penetration testing, managed secret storage, backup restoration tests, and production least-privilege role bootstrap remain release blockers. There are no medical record workflows yet. Do not use the current preview for real patient or payment data.
+Phone/email verification, password reset, MFA, account recovery, Redis-backed rate limiting, per-device session management, external penetration testing, managed secret storage, backup restoration tests, and production least-privilege role bootstrap remain release blockers. Patient-record UI, private media storage, retention controls, key-management service integration, and independently reviewed key rotation remain incomplete. Do not use the current preview for real patient or payment data.

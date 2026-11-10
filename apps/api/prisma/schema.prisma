@@ -35,6 +35,24 @@ enum AppointmentStatus {
   NO_SHOW
 }
 
+enum EncounterStatus {
+  OPEN
+  CLOSED
+}
+
+enum ClinicalNoteType {
+  GENERAL
+  EXAMINATION
+  TREATMENT
+  ADDENDUM
+}
+
+enum ConsentKind {
+  TREATMENT
+  PRIVACY
+  COMMUNICATION
+}
+
 model Tenant {
   id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name          String               @db.VarChar(160)
@@ -52,6 +70,10 @@ model Tenant {
   staff         Staff[]
   services      ClinicService[]
   appointments  Appointment[]
+  encounters    ClinicalEncounter[]
+  clinicalNotes ClinicalNote[]
+  consents      PatientConsent[]
+  auditEvents   AccessAudit[]
 
   @@map("tenants")
 }
@@ -74,16 +96,19 @@ model User {
 }
 
 model Membership {
-  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId  String           @map("tenant_id") @db.Uuid
-  userId    String           @map("user_id") @db.Uuid
-  roleId    String           @map("role_id") @db.Uuid
-  status    MembershipStatus @default(ACTIVE)
-  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  user      User             @relation(fields: [userId], references: [id], onDelete: Restrict)
-  role      Role             @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict)
-  sessions  RefreshSession[]
+  id                    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String           @map("tenant_id") @db.Uuid
+  userId                String           @map("user_id") @db.Uuid
+  roleId                String           @map("role_id") @db.Uuid
+  status                MembershipStatus @default(ACTIVE)
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role                  Role             @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict)
+  sessions              RefreshSession[]
+  clinicalNotesAuthored ClinicalNote[]
+  consentsRecorded      PatientConsent[]
+  auditEvents           AccessAudit[]
 
   @@unique([tenantId, userId])
   @@unique([tenantId, id])
@@ -172,15 +197,18 @@ model RefreshSession {
 }
 
 model Patient {
-  id           String        @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String        @map("tenant_id") @db.Uuid
-  branchId     String?       @map("branch_id") @db.Uuid
-  fullName     String        @map("full_name") @db.VarChar(160)
-  phone        String?       @db.VarChar(32)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  branch       Branch?       @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  id           String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String              @map("tenant_id") @db.Uuid
+  branchId     String?             @map("branch_id") @db.Uuid
+  fullName     String              @map("full_name") @db.VarChar(160)
+  phone        String?             @db.VarChar(32)
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch       Branch?             @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
   appointments Appointment[]
+  encounters   ClinicalEncounter[]
+  consents     PatientConsent[]
+  auditEvents  AccessAudit[]
 
   @@id([tenantId, id])
   @@unique([tenantId, phone])
@@ -189,15 +217,16 @@ model Patient {
 }
 
 model Staff {
-  id           String        @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String        @map("tenant_id") @db.Uuid
-  branchId     String?       @map("branch_id") @db.Uuid
-  displayName  String        @map("display_name") @db.VarChar(160)
-  isActive     Boolean       @default(true) @map("is_active")
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  branch       Branch?       @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  id           String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String              @map("tenant_id") @db.Uuid
+  branchId     String?             @map("branch_id") @db.Uuid
+  displayName  String              @map("display_name") @db.VarChar(160)
+  isActive     Boolean             @default(true) @map("is_active")
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch       Branch?             @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
   appointments Appointment[]
+  encounters   ClinicalEncounter[]
 
   @@id([tenantId, id])
   @@index([tenantId, displayName])
@@ -221,25 +250,106 @@ model ClinicService {
 }
 
 model Appointment {
-  id        String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId  String            @map("tenant_id") @db.Uuid
-  branchId  String?           @map("branch_id") @db.Uuid
-  patientId String            @map("patient_id") @db.Uuid
-  staffId   String            @map("staff_id") @db.Uuid
-  serviceId String            @map("service_id") @db.Uuid
-  startsAt  DateTime          @map("starts_at") @db.Timestamptz(6)
-  endsAt    DateTime          @map("ends_at") @db.Timestamptz(6)
-  status    AppointmentStatus @default(BOOKED)
-  note      String?           @db.VarChar(500)
-  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant    Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  branch    Branch?           @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
-  patient   Patient           @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
-  staff     Staff             @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Restrict)
-  service   ClinicService     @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Restrict)
+  id        String             @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String             @map("tenant_id") @db.Uuid
+  branchId  String?            @map("branch_id") @db.Uuid
+  patientId String             @map("patient_id") @db.Uuid
+  staffId   String             @map("staff_id") @db.Uuid
+  serviceId String             @map("service_id") @db.Uuid
+  startsAt  DateTime           @map("starts_at") @db.Timestamptz(6)
+  endsAt    DateTime           @map("ends_at") @db.Timestamptz(6)
+  status    AppointmentStatus  @default(BOOKED)
+  note      String?            @db.VarChar(500)
+  createdAt DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch    Branch?            @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  patient   Patient            @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
+  staff     Staff              @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Restrict)
+  service   ClinicService      @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Restrict)
+  encounter ClinicalEncounter?
 
   @@id([tenantId, id])
+  @@unique([tenantId, id, patientId, staffId])
   @@index([tenantId, startsAt])
   @@index([tenantId, patientId, startsAt])
   @@map("appointments")
+}
+
+model ClinicalEncounter {
+  id            String          @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String          @map("tenant_id") @db.Uuid
+  patientId     String          @map("patient_id") @db.Uuid
+  staffId       String          @map("staff_id") @db.Uuid
+  appointmentId String?         @map("appointment_id") @db.Uuid
+  status        EncounterStatus @default(OPEN)
+  startedAt     DateTime        @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt       DateTime?       @map("ended_at") @db.Timestamptz(6)
+  createdAt     DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient       Patient         @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
+  staff         Staff           @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Restrict)
+  appointment   Appointment?    @relation(fields: [tenantId, appointmentId, patientId, staffId], references: [tenantId, id, patientId, staffId], onDelete: Restrict)
+  notes         ClinicalNote[]
+
+  @@id([tenantId, id])
+  @@unique([tenantId, appointmentId])
+  @@unique([tenantId, appointmentId, patientId, staffId])
+  @@index([tenantId, patientId, startedAt])
+  @@map("clinical_encounters")
+}
+
+model ClinicalNote {
+  id                 String            @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String            @map("tenant_id") @db.Uuid
+  encounterId        String            @map("encounter_id") @db.Uuid
+  authorMembershipId String            @map("author_membership_id") @db.Uuid
+  kind               ClinicalNoteType  @default(GENERAL)
+  ciphertext         String            @db.Text
+  nonce              String            @db.VarChar(24)
+  authTag            String            @map("auth_tag") @db.VarChar(24)
+  keyVersion         String            @map("key_version") @db.VarChar(32)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant             Tenant            @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  encounter          ClinicalEncounter @relation(fields: [tenantId, encounterId], references: [tenantId, id], onDelete: Restrict)
+  authorMembership   Membership        @relation(fields: [tenantId, authorMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@id([tenantId, id])
+  @@index([tenantId, encounterId, createdAt])
+  @@map("clinical_notes")
+}
+
+model PatientConsent {
+  id                 String      @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String      @map("tenant_id") @db.Uuid
+  patientId          String      @map("patient_id") @db.Uuid
+  recordedByMemberId String      @map("recorded_by_member_id") @db.Uuid
+  kind               ConsentKind
+  documentVersion    String      @map("document_version") @db.VarChar(80)
+  grantedAt          DateTime    @default(now()) @map("granted_at") @db.Timestamptz(6)
+  revokedAt          DateTime?   @map("revoked_at") @db.Timestamptz(6)
+  tenant             Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient            Patient     @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
+  recordedBy         Membership  @relation(fields: [tenantId, recordedByMemberId], references: [tenantId, id], onDelete: Restrict)
+
+  @@id([tenantId, id])
+  @@index([tenantId, patientId, kind, grantedAt])
+  @@map("patient_consents")
+}
+
+model AccessAudit {
+  id                String     @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String     @map("tenant_id") @db.Uuid
+  patientId         String     @map("patient_id") @db.Uuid
+  actorMembershipId String     @map("actor_membership_id") @db.Uuid
+  action            String     @db.VarChar(80)
+  resourceType      String     @map("resource_type") @db.VarChar(80)
+  resourceId        String?    @map("resource_id") @db.Uuid
+  occurredAt        DateTime   @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  tenant            Tenant     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient           Patient    @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
+  actorMembership   Membership @relation(fields: [tenantId, actorMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@id([tenantId, id])
+  @@index([tenantId, patientId, occurredAt])
+  @@map("access_audit")
 }

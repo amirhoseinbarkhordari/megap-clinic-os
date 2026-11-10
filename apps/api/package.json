@@ -10,7 +10,7 @@
     "db:generate": "dotenv -e ../../.env -- prisma generate",
     "db:migrate": "dotenv -e ../../.env -- prisma migrate dev",
     "db:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
-    "test:integration": "dotenv -e ../../.env -- tsx --test test/tenant-isolation.test.ts test/scheduling-invariants.test.ts",
+    "test:integration": "dotenv -e ../../.env -- tsx --test test/tenant-isolation.test.ts test/scheduling-invariants.test.ts test/phi-crypto.test.ts test/medical-records.test.ts",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

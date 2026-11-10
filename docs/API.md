@@ -33,3 +33,17 @@ Scheduling endpoints require an authenticated tenant and their matching permissi
 PostgreSQL enforces half-open time range exclusion for each staff member (`[start,end)`), so adjacent bookings are allowed and concurrent overlapping requests cannot both succeed. Canceled and no-show bookings release the slot. Tenant RLS and composite foreign keys scope every scheduling record. Working-hour calendars and appointment rescheduling remain outstanding.
 
 The global validation pipe rejects unknown fields. Auth endpoints return generic credential errors. The refresh cookie is scoped to `/api/v1/auth`, HttpOnly, SameSite=Strict, Secure in production, and lasts 30 days. Production web and API must use same-site HTTPS origins for this cookie configuration.
+
+## Medical records
+
+Routes are scoped beneath `/patients/:patientId/records` and require an authenticated membership plus the listed permission:
+
+- `GET /patients/:patientId/records` reads up to 100 encounters and consent records (`records.manage`). Clinical note bodies are decrypted only after the tenant-scoped query and each read is audited.
+- `POST /patients/:patientId/records/encounters` opens an encounter for an active staff member; optional appointment linkage must match patient and staff (`records.manage`).
+- `POST /patients/:patientId/records/encounters/:encounterId/notes` adds a note to an open encounter (`records.manage`). Notes are encrypted before persistence; database triggers reject update and delete.
+- `POST /patients/:patientId/records/encounters/:encounterId/close` closes an encounter (`records.manage`).
+- `POST /patients/:patientId/records/consents` records consent kind and document version (`consent.manage`). Only one active consent per kind is allowed.
+- `PATCH /patients/:patientId/records/consents/:consentId/revoke` records one-way revocation (`consent.manage`).
+- `GET /patients/:patientId/records/audit` reads the latest 100 patient access events (`audit.read`). Audit records are append-only.
+
+Set `MEGAP_PHI_ENCRYPTION_KEYS` to a JSON object mapping key versions to base64-encoded 32-byte keys and `MEGAP_PHI_ACTIVE_KEY_VERSION` to the key used for new notes. Keep old keys available until every note encrypted under them has been re-encrypted through a separately reviewed rotation job. Missing or invalid key configuration prevents API startup.

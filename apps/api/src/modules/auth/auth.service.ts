@@ -72,6 +72,9 @@ export class AuthService {
           "patients.manage",
           "appointments.manage",
           "catalog.manage",
+          "records.manage",
+          "consent.manage",
+          "audit.read",
         ];
         await tx.permission.createMany({
           data: permissions.map((key) => ({ key, description: key })),

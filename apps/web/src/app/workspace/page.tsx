@@ -574,7 +574,15 @@ export default function WorkspacePage() {
                       <tbody>
                         {visiblePatients.map((patient) => (
                           <tr key={patient.id}>
-                            <th scope="row">{patient.fullName}</th>
+                            <th scope="row">
+                              {patient.fullName}
+                              <Link
+                                className="button button-outline patient-record-link"
+                                href={`/workspace/patients/${patient.id}/records`}
+                              >
+                                پرونده درمانی
+                              </Link>
+                            </th>
                             <td dir="ltr" className="patient-phone-cell">
                               {patient.phone ?? "ثبت نشده"}
                             </td>

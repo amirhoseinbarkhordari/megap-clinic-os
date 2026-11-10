@@ -31,9 +31,12 @@ RTL layout, design tokens, shared form components, login/registration, in-memory
 
 Staff and service catalog APIs, patient CRM, appointment creation/list/status lifecycle, tenant-scoped scheduling records, basic booking UI, and database-enforced conflict protection are implemented. Staff working-hour calendars, rescheduling, and end-to-end browser verification remain open.
 
-## Phase 5 — Medical records
+## Phase 5 — Medical records (secure API foundation implemented)
 
-Permission-scoped histories, treatment records, consent, private media and access audit.
+- [x] Tenant-scoped encounters, encrypted clinical notes (AES-256-GCM), consent history, and permission-protected access audit.
+- [x] PostgreSQL RLS, append-only note/audit triggers, one-way consent revocation, and tenant-aware encounter/appointment constraints.
+- [x] Integration coverage for encryption, key rotation, tenant isolation, consent lifecycle, encounter lifecycle, and append-only data.
+- [ ] Patient-record UI, immutable addenda UX, private media/object storage, retention/export workflows, and security review.
 
 ## Phase 6 — Finance and inventory
 

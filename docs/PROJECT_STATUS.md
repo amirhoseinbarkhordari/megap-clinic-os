@@ -1,46 +1,44 @@
 # Project status
 
-Updated: 2026-11-10
+Updated: 2026-11-11
 
 ## Current phase
 
-Phases 0–2 are complete. Phase 3 has login/registration and an authenticated patient workspace. Phase 4 includes tenant-scoped staff/service APIs and a basic appointment UI with creation, listing, and status transitions; PostgreSQL prevents concurrent overlap for one staff member. Database-backed tenant-isolation and concurrent-booking checks pass locally. Working-hour calendars, rescheduling, medical records, finance, inventory, patient portal, administration, and production readiness remain open.
+Phases 0–2 are complete. Phase 3 includes registration, login, and an authenticated patient workspace. Phase 4 includes tenant-scoped staff/service APIs and a basic appointment workflow; PostgreSQL prevents overlapping appointments per staff member. Phase 5 now has a secure medical-record API foundation with encrypted notes, consent lifecycle, and append-only access auditing. Database-backed tenant isolation, concurrent booking, clinical records, consent, and crypto checks pass locally.
+
+Working-hour calendars, rescheduling, patient-record UI, private media, finance, inventory, patient portal, background jobs, SaaS administration, and production readiness remain open. This is not yet a production-ready clinic system.
 
 ## Available locally
 
-- Web demo preview at `http://localhost:3000` (synthetic records in browser storage only).
-- NestJS API source and Swagger at `/api/docs` once the API can connect to local PostgreSQL.
-- Docker Compose targets ArvanCloud's mirror for PostgreSQL and Redis; both services are healthy.
+- Web preview: `http://localhost:3000`.
+- Authenticated workspace: `/workspace` after clinic registration at `/register`.
+- NestJS API and Swagger: `http://localhost:4000/api/docs` when the API is running.
+- Docker Compose uses ArvanCloud's mirror for PostgreSQL and Redis.
 - Private GitHub remote: `amirhoseinbarkhordari/megap-clinic-os`.
 
 ## Completed work
 
 - [x] Product, architecture, roadmap, environment, API, security, design, and UX documentation.
-- [x] pnpm/Turborepo monorepo, Next.js RTL preview, NestJS API, CI scaffold, and dependency lockfile.
-- [x] Prisma 6.19 schema for tenants, users, memberships, roles, permissions, branches, subscriptions, sessions, patients, staff, services, and appointments.
-- [x] Initial PostgreSQL migration with tenant-aware foreign keys and forced RLS policies.
-- [x] Local PostgreSQL admin/runtime role split; API runs with the non-superuser runtime role.
-- [x] Atomic clinic-owner registration with first branch and 14-day trial, scrypt password hashing, short-lived access JWT, hashed rotating refresh sessions, and logout revocation.
-- [x] Global membership guard and transaction-local tenant context helper.
+- [x] pnpm/Turborepo monorepo, Next.js RTL web app, NestJS API, CI scaffold, and pinned dependency lockfile.
+- [x] PostgreSQL tenant-aware schema, forced RLS, tenant-aware foreign keys, and separate local runtime/admin database identities.
+- [x] Clinic registration, owner membership, trial, scrypt password hashing, short-lived access JWT, hashed rotating refresh sessions, and logout revocation.
 - [x] Tenant-scoped patient list, search, detail, and create API with permission enforcement.
-- [x] Applied initial migration using the admin URL; API runtime uses a separate non-superuser role.
-- [x] RLS integration test passed with two isolated tenants.
-- [x] HTTP smoke passed: health, register, login, refresh rotation, and logout.
-- [x] Root formatting, lint, typecheck, production build, and design-token checks passed.
-- [x] API smoke passed: health, registration, patient create/list/search/detail, login, refresh rotation, and logout.
-- [x] Push the SaaS-core implementation to GitHub (`master`).
+- [x] Tenant-scoped staff and service APIs plus appointment creation, listing, and status transitions.
+- [x] PostgreSQL appointment time ordering and concurrent staff overlap protection.
+- [x] Tenant-scoped clinical encounters, encrypted note storage, consent lifecycle, and append-only patient access audit.
+- [x] Medical-record migration constraints, RLS, versioned PHI encryption key configuration, and API integration coverage.
+- [x] Push SaaS-core and scheduling milestones to GitHub (`master`).
 
-## Still required
+## Remaining work
 
-- [x] Build login/registration screens and connect the web UI to the tenant-scoped patient API.
-- [x] Add authenticated patient list, privacy-preserving search, and create workflow with loading/error/empty states.
-- [x] Add tenant-scoped staff and service APIs plus appointment creation, bounded listing, and status transitions.
-- [x] Enforce appointment time ordering and concurrent staff overlap protection in PostgreSQL.
-- [x] Add an authenticated scheduling workflow for staff, services, and appointments.
-- [ ] Add staff working hours and appointment rescheduling.
-- [ ] Complete scheduling, patient CRM, medical records, finance, inventory, patient portal, background jobs, and platform administration.
-- [ ] Production deployment, backup/restore validation, observability, security review, and end-to-end/browser testing.
+- [ ] Staff working hours, holidays, and appointment rescheduling.
+- [ ] Patient-record UI, private media/object storage, and reviewed retention/export workflows.
+- [ ] Finance ledger, idempotent payments, reversals, expenses, inventory, and reporting.
+- [ ] Patient portal, notification/SMS provider boundary, and background jobs.
+- [ ] Membership administration, subscription limits/lifecycle, and platform administration.
+- [ ] Password recovery, phone/email verification, MFA, rate limiting, and device session management.
+- [ ] Production least-privilege database bootstrap, managed secrets, deployment/reverse proxy/TLS, backups and restore exercise, observability, security review, and browser/e2e verification.
 
-## Safety
+## Local demo safety
 
-The current web preview contains synthetic sample entries and stores them in localStorage. The API currently provides foundational clinic flows, not a complete medical record or production workflow. Do not use this project for real medical, patient, or payment data.
+Use synthetic records only. The preview is still an MVP and lacks independent security review, operational controls, and complete clinical workflows. Do not use it for real patient or payment data.
