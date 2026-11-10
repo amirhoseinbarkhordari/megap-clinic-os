@@ -3,13 +3,29 @@
   "sourceRoots": ["apps/web/src"],
   "locale": "fa-IR",
   "canonicalMap": "UX-CONTRACT.md",
-  "requiredCapabilities": ["Navigation"],
-  "ownership": {},
+  "requiredCapabilities": ["Form", "CRUD"],
+  "ownership": {
+    "Authentication and session state": "apps/web/src/lib/auth-context.tsx",
+    "Text input": "apps/web/src/components/text-field.tsx",
+    "Password input": "apps/web/src/components/text-field.tsx",
+    "Authentication form": "apps/web/src/components/auth-form.tsx",
+    "Patient workspace": "apps/web/src/app/workspace/page.tsx",
+    "Navigation": "apps/web/src/app/workspace/page.tsx",
+    "Form": "apps/web/src/components/auth-form.tsx",
+    "CRUD": "apps/web/src/app/workspace/page.tsx",
+    "Async resilience": "apps/web/src/lib/auth-context.tsx",
+    "Date": "native",
+    "Select/Listbox": "native"
+  },
   "requiredCommands": ["typecheck", "build", "premium"],
   "commands": {
     "typecheck": "pnpm typecheck",
     "build": "pnpm build",
     "premium": "pnpm verify:premium"
   },
-  "evidence": {}
+  "evidence": {
+    "Tenant isolation": "apps/api/test/tenant-isolation.test.ts",
+    "API contracts": "docs/API.md",
+    "Security boundaries": "docs/SECURITY.md"
+  }
 }

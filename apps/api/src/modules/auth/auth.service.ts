@@ -17,6 +17,8 @@ import { MembershipStatus, Prisma } from "@prisma/client";
 import { PrismaService } from "../database/database.module";
 import { LoginDto, RegisterDto } from "./auth.dto";
 import { withTenantTransaction } from "../database/tenant-transaction";
+import { normalizePhone } from "../../common/normalize-phone";
+import type { TenantPrincipal } from "./tenant-context";
 
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const HASH_PARAMS = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
@@ -46,7 +48,7 @@ export class AuthService {
 
   async register(input: RegisterDto): Promise<{ accessToken: string; refreshToken: string }> {
     const email = input.email?.trim().toLowerCase() || null;
-    const phone = input.phone?.replace(/[\s()-]/g, "") || null;
+    const phone = normalizePhone(input.phone);
     if (!email && !phone) throw new BadRequestException("ایمیل یا شماره تلفن الزامی است.");
 
     const passwordHash = await this.hashPassword(input.password);
@@ -103,8 +105,11 @@ export class AuthService {
 
   async login(input: LoginDto): Promise<{ accessToken: string; refreshToken: string }> {
     const identifier = input.identifier.trim().toLowerCase();
+    const phoneIdentifier = normalizePhone(input.identifier);
     const user = await this.prisma.user.findFirst({
-      where: { OR: [{ email: identifier }, { phone: input.identifier.replace(/[\s()-]/g, "") }] },
+      where: {
+        OR: [{ email: identifier }, ...(phoneIdentifier ? [{ phone: phoneIdentifier }] : [])],
+      },
     });
     if (
       !user ||
@@ -164,6 +169,25 @@ export class AuthService {
     await this.prisma.refreshSession.updateMany({
       where: { tokenHash: this.hashToken(rawToken), revokedAt: null },
       data: { revokedAt: new Date() },
+    });
+  }
+
+  async profile(principal: TenantPrincipal) {
+    return withTenantTransaction(this.prisma, principal.tenantId, async (tx) => {
+      const membership = await tx.membership.findFirst({
+        where: {
+          id: principal.membershipId,
+          userId: principal.userId,
+          tenantId: principal.tenantId,
+        },
+        select: {
+          user: { select: { displayName: true, email: true, phone: true } },
+          tenant: { select: { name: true, timezone: true, currency: true } },
+          role: { select: { name: true, key: true } },
+        },
+      });
+      if (!membership) throw new UnauthorizedException("نشست معتبر نیست.");
+      return { ...membership.user, clinic: membership.tenant, role: membership.role };
     });
   }
 

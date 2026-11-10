@@ -4,7 +4,7 @@ Updated: 2026-11-10
 
 ## Current phase
 
-Phases 0–2 are complete. The SaaS foundation includes Prisma schema and migration with RLS, tenant-scoped transaction helper, membership and permission guard, auth lifecycle, and the first tenant-scoped patient endpoints. The migration is applied and database-backed checks pass locally. Phase 3 is next: connect the existing web experience to auth and patient APIs.
+Phases 0–2 are complete. Phase 3 has an implemented authentication flow and clinic workspace connected to the tenant-scoped patient API; it remains in progress pending final build/integration checks and browser accessibility review. The SaaS foundation includes Prisma schema and migration with RLS, tenant-scoped transactions, membership and permission guards, and rotating auth sessions. The migration is applied locally and database-backed tenant-isolation checks pass.
 
 ## Available locally
 
@@ -28,11 +28,12 @@ Phases 0–2 are complete. The SaaS foundation includes Prisma schema and migrat
 - [x] HTTP smoke passed: health, register, login, refresh rotation, and logout.
 - [x] Root formatting, lint, typecheck, production build, and design-token checks passed.
 - [x] API smoke passed: health, registration, patient create/list/search/detail, login, refresh rotation, and logout.
-- [ ] Push the current SaaS-core implementation to GitHub.
+- [x] Push the SaaS-core implementation to GitHub (`master`).
 
 ## Still required
 
-- [ ] Build auth screens and connect the web UI to the tenant-scoped API.
+- [x] Build login/registration screens and connect the web UI to the tenant-scoped patient API.
+- [x] Add authenticated patient list, privacy-preserving search, and create workflow with loading/error/empty states.
 - [ ] Implement appointment scheduling, including database conflict constraints.
 - [ ] Complete scheduling, patient CRM, medical records, finance, inventory, patient portal, background jobs, and platform administration.
 - [ ] Production deployment, backup/restore validation, observability, security review, and end-to-end/browser testing.

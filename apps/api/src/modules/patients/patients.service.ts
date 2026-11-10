@@ -4,6 +4,7 @@ import { PrismaService } from "../database/database.module";
 import { withTenantTransaction } from "../database/tenant-transaction";
 import { TenantPrincipal } from "../auth/tenant-context";
 import { CreatePatientDto, PatientListQuery } from "./patients.dto";
+import { normalizePhone, normalizeSearchPhone } from "../../common/normalize-phone";
 
 @Injectable()
 export class PatientsService {
@@ -16,7 +17,7 @@ export class PatientsService {
         ? {
             OR: [
               { fullName: { contains: query.search.trim(), mode: "insensitive" } },
-              { phone: { contains: query.search.replace(/[\s()-]/g, "") } },
+              { phone: { contains: normalizeSearchPhone(query.search) } },
             ],
           }
         : {}),
@@ -48,7 +49,7 @@ export class PatientsService {
   }
 
   async create(principal: TenantPrincipal, input: CreatePatientDto) {
-    const phone = input.phone?.replace(/[\s()-]/g, "") || null;
+    const phone = normalizePhone(input.phone);
     try {
       return await withTenantTransaction(this.prisma, principal.tenantId, (tx) =>
         tx.patient.create({

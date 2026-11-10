@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import Link from "next/link";
 
 type View = "overview" | "appointments" | "patients";
 type FormMode = "appointment" | "patient" | null;
@@ -487,9 +488,13 @@ export default function HomePage() {
               پیش‌نمایش آزمایشی
             </span>
             <span className="topbar-date">{today ? dateLabel(today) : "امروز"}</span>
-            <button className="avatar-button" aria-label="حساب کاربری نمایشی">
-              م
-            </button>
+            <Link
+              className="avatar-button preview-login-link"
+              href="/login"
+              aria-label="ورود به فضای کاری کلینیک"
+            >
+              ورود
+            </Link>
           </div>
         </header>
 
@@ -499,6 +504,10 @@ export default function HomePage() {
             <strong>نسخه‌ی نمایشی</strong> داده‌ها فقط در همین مرورگر ذخیره می‌شوند؛ اطلاعات واقعی
             بیمار وارد نکنید.
           </span>
+          <div className="preview-auth-actions">
+            <Link href="/login">ورود به فضای کلینیک</Link>
+            <Link href="/register">ساخت حساب کلینیک</Link>
+          </div>
           <button onClick={resetPreview} className="reset-button">
             <Icon name="reset" />
             بازنشانی داده‌ی نمونه

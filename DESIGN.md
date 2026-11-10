@@ -11,6 +11,8 @@ colors:
   muted: "#78817C"
   border: "#E5EAE6"
   success-soft: "#E7F0ED"
+  danger: "#9B463C"
+  danger-soft: "#FAEFED"
 typography:
   sans:
     fontFamily: "Vazirmatn, Tahoma, sans-serif"

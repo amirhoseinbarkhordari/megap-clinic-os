@@ -25,7 +25,7 @@
 
 ## Phase 3 — Design system and shell
 
-RTL layout, design tokens, shared components, navigation, auth pages, dashboard shell and responsive states.
+RTL layout, design tokens, shared form components, login/registration, in-memory access token and cookie refresh lifecycle, authenticated clinic workspace, patient list/search/create, and responsive states. Core shell and first patient workflow are implemented; remaining navigation/module shells and browser accessibility review are open.
 
 ## Phase 4 — Clinic operations MVP
 

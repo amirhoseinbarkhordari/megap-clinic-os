@@ -1,9 +1,9 @@
-import { Body, Controller, HttpCode, Inject, Post, Req, Res } from "@nestjs/common";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { Body, Controller, Get, HttpCode, Inject, Post, Req, Res } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { LoginDto, RegisterDto } from "./auth.dto";
-import { Public } from "./tenant-context";
+import { CurrentTenant, Public, TenantPrincipal } from "./tenant-context";
 
 const COOKIE_NAME = "megap_refresh";
 const cookieOptions = {
@@ -59,5 +59,12 @@ export class AuthController {
   async logout(@Req() request: Request, @Res({ passthrough: true }) response: Response) {
     await this.auth.logout(readRefreshCookie(request));
     response.clearCookie(COOKIE_NAME, cookieOptions);
+  }
+
+  @Get("me")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Read the active user's clinic profile" })
+  profile(@CurrentTenant() principal: TenantPrincipal) {
+    return this.auth.profile(principal);
   }
 }
