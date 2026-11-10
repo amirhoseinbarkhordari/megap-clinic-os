@@ -19,8 +19,8 @@ The workspace began as an initialized Git repository on `master` with no commits
 - [x] Built API health endpoint smoke check (200; `status: ok`).
 - [x] Interactive synthetic preview: dashboard, patients, appointments, local preview CRUD, search, filters, and status changes.
 - [ ] UI interaction and viewport review; use `http://localhost:3000` for manual preview.
-- [x] Initial foundation pushed to the private GitHub repository.
-- [ ] Docker-backed PostgreSQL/Redis startup and preview update push.
+- [x] Initial foundation and interactive preview pushed to the private GitHub repository.
+- [ ] Docker-backed PostgreSQL/Redis startup and database-backed clinic workflows.
 
 ## Blocking environment issues
 
