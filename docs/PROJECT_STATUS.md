@@ -4,7 +4,7 @@ Updated: 2026-11-10
 
 ## Current phase
 
-Phase 0 complete. Phase 1 foundation scaffold implemented; formatting, lint, typecheck, build, design-token audit, and web/API HTTP smoke checks pass. PostgreSQL/Redis startup remains pending Docker access.
+Phase 0 complete. Phase 1 foundation and an interactive browser-only preview are implemented. Formatting, lint, typecheck, build, and design-token checks pass. PostgreSQL/Redis startup remains pending Docker access.
 
 ## Workspace assessment
 
@@ -17,7 +17,10 @@ The workspace began as an initialized Git repository on `master` with no commits
 - [x] Dependency install, lint, typecheck, and production build.
 - [x] Web production server HTTP smoke check (200; Persian RTL markup).
 - [x] Built API health endpoint smoke check (200; `status: ok`).
-- [ ] Docker-backed PostgreSQL/Redis startup and initial GitHub push.
+- [x] Interactive synthetic preview: dashboard, patients, appointments, local preview CRUD, search, filters, and status changes.
+- [ ] UI interaction and viewport review; use `http://localhost:3000` for manual preview.
+- [x] Initial foundation pushed to the private GitHub repository.
+- [ ] Docker-backed PostgreSQL/Redis startup and preview update push.
 
 ## Blocking environment issues
 
@@ -26,8 +29,8 @@ The workspace began as an initialized Git repository on `master` with no commits
 
 ## Risks
 
-This foundation is not a clinic product yet. Do not use this repository for real patient/medical/payment data. Tenant isolation, authentication, scheduling safety, auditing, database connectivity, and backups are not implemented.
+This is an interactive preview, not a production clinic system. Do not use it for real patient/medical/payment data. Preview records are synthetic and stored in browser localStorage. Authentication, API persistence, tenant isolation, database-backed booking protection, medical audit, and backups are not implemented.
 
 ## Next
 
-Resolve Docker Desktop access, start PostgreSQL and Redis, then implement Prisma and database-backed health checks. Configure Git write access to commit and push the verified foundation to the private GitHub repository.
+The preview is available at `http://localhost:3000`. Next, implement persistent database-backed patient and appointment workflows with authentication and tenant isolation, then expand clinic operations.

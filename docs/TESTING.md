@@ -15,3 +15,12 @@ No domain unit or integration tests are configured yet. Later phases must add te
 - Docker checks were not run: Docker Desktop's engine is inaccessible in this session.
 
 Authentication, database operations, tenant isolation, and clinic workflows are still unimplemented.
+
+## Interactive preview verification (2026-11-10)
+
+- `pnpm format:check` — passed.
+- `pnpm lint` — passed.
+- `pnpm typecheck` — passed.
+- `pnpm build` — passed.
+- `pnpm verify:premium` — passed.
+- A production web server starts on `http://localhost:3000`. UI click-path and viewport verification are pending manual review.

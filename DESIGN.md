@@ -64,8 +64,8 @@ Hierarchy comes from spacing, fine borders, and subtle surface differences. Use 
 
 ## Components and states
 
-Navigation exposes current location and clearly marks unfinished modules as unavailable. Statuses pair text with a visual mark. Progress is labelled and exposes numeric values. Links have visible keyboard focus. Loading and error components will be added with the first API-backed workflow. Motion is minimal and respects reduced-motion settings.
+Navigation exposes current location and clearly marks unfinished modules as unavailable. Statuses pair text with a visual mark. The interactive preview labels its synthetic localStorage data and warns against entering real patient data. Summary counts derive from the preview store. Controls have visible keyboard focus, empty states invite the next action, and local saves report a live status. Motion is minimal and respects reduced-motion settings.
 
 ## Content
 
-Write concise Persian in the user's working vocabulary. Label actions by their result. Empty and incomplete states explain what is needed next. Never show invented patient, appointment, or financial records.
+Write concise Persian in the user's working vocabulary. Label actions by their result. Empty and incomplete states explain what is needed next. Never show invented patient, appointment, or financial records outside the explicitly labelled preview.

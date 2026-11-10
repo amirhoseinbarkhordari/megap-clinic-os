@@ -31,6 +31,10 @@ Clinic owners, administrators, receptionists, clinicians, nurses, financial staf
 
 Medical imaging and documents, complete charting/consent workflows, payment gateway processing, ledger/refunds, inventory, SMS campaigns, patient portal, mobile application, subscription billing, platform administration, advanced analytics. These require their own security and business contracts.
 
+## Interactive preview boundary
+
+The web preview uses clearly labelled synthetic records in browser localStorage to demonstrate navigation, patient registration, appointment creation, search, filtering, and status changes. It does not authenticate users, call the API, write to PostgreSQL, or provide tenant isolation. It must not accept real patient or medical information.
+
 ## Quality attributes
 
 - Strict clinic-to-clinic isolation, least privilege, auditability.

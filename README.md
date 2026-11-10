@@ -17,6 +17,8 @@ pnpm/Turborepo, Next.js, NestJS, Prisma, PostgreSQL, Redis/BullMQ, Docker Compos
 
 Requirements: Node.js 20.19+ and pnpm 10. Start with the steps in [Local environment](docs/ENVIRONMENT.md), then use `pnpm lint`, `pnpm typecheck`, and `pnpm build` for checks. API docs are served at `/api/docs`; the API health endpoint is `/api/v1/health`.
 
+The web app opens as an interactive preview at `http://localhost:3000`. It uses synthetic data saved to this browser only. Do not enter real patient information; authentication, API persistence, and tenant isolation are not implemented yet.
+
 See [Architecture](docs/ARCHITECTURE.md), [Decisions](docs/DECISIONS.md), and [Roadmap](docs/ROADMAP.md).
 
 ## Security notice
