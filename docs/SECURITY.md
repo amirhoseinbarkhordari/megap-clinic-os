@@ -1,5 +1,21 @@
-﻿# Security status
+# Security design and current limits
 
-Security controls are currently requirements only; no authentication or authorization exists. Do not use real clinic or patient data.
+## Implemented foundation
 
-Before sensitive workflows ship, implement password hashing, secure session/refresh rotation, brute-force rate limits, DTO validation, server-side permission and tenant enforcement, PostgreSQL tenant policies, audited sensitive access, private file authorization, secret management, safe error handling, backups, and cross-tenant negative tests.
+- Tenant context is signed into short-lived access tokens only after the API resolves an active membership. Requests cannot choose their tenant with a client-supplied ID.
+- Protected routes use a global membership guard. It rechecks the user, membership, tenant, role, and permissions on each request so suspensions take effect before token expiry.
+- Access tokens expire after ten minutes. Refresh tokens are random opaque values, stored only as SHA-256 hashes, sent in an HttpOnly, SameSite=Strict cookie, and rotated with conditional revocation.
+- Passwords use Node scrypt with a random 128-bit salt and explicit work factors. Password input is capped at 128 characters.
+- Tenant-owned tables use PostgreSQL RLS with forced row security. Tenant scope is installed transaction-locally by `withTenantTransaction`; composite foreign keys bind memberships, roles, branches, and patients to the same tenant.
+- Patient routes require the `patients.manage` permission. Patient queries are tenant-scoped both in Prisma filters and at the PostgreSQL RLS layer; optional branch assignment is constrained by a composite tenant foreign key.
+- Registration creates a clinic, owner membership, first branch, permissions, and a 14-day trial atomically.
+
+## Database roles and production deployment
+
+The local Compose PostgreSQL user is a development superuser and is not an acceptable production runtime identity. Production must apply migrations with a dedicated migration role, then run the API as a separate role that does not own tables, is not a superuser, and lacks `BYPASSRLS`. The runtime role needs only minimum DML grants. RLS protects against omitted tenant filters; it does not protect against arbitrary SQL executed by a compromised API role that can set transaction context. Parameterized queries, restricted raw SQL, app-layer tenant authorization, and security review remain required.
+
+The membership RLS policy allows transaction-local `app.user_id` while resolving that authenticated user's memberships at login. The API sets it only after verifying the password, inside one transaction. Regular tenant access uses `app.tenant_id`.
+
+## Not implemented yet
+
+Phone/email verification, password reset, MFA, account recovery, Redis-backed rate limiting, audit history, per-device session management, external penetration testing, managed secret storage, backup restoration tests, and production least-privilege role bootstrap remain release blockers. There are no medical record workflows yet. Do not use the current preview for real patient or payment data.

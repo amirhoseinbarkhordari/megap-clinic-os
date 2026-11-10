@@ -1,6 +1,6 @@
 ﻿# MEGAP Clinic OS
 
-MEGAP Clinic OS is a Persian-first, RTL clinic operations platform for beauty and aesthetic clinics. The repository is at the foundation stage; see [Project status](docs/PROJECT_STATUS.md) and the [roadmap](docs/ROADMAP.md) for what is implemented versus planned.
+MEGAP Clinic OS is a Persian-first, RTL clinic operations platform for beauty and aesthetic clinics. The web app currently provides a synthetic interactive preview. The backend now has a multi-tenant SaaS foundation, authentication, PostgreSQL row-level security, and first patient APIs. See [Project status](docs/PROJECT_STATUS.md) and the [roadmap](docs/ROADMAP.md) for what is implemented versus planned.
 
 ## Product direction
 
@@ -11,16 +11,16 @@ MEGAP Clinic OS is a Persian-first, RTL clinic operations platform for beauty an
 
 ## Planned stack
 
-pnpm/Turborepo, Next.js, NestJS, Prisma, PostgreSQL, Redis/BullMQ, Docker Compose, and automated CI. Components will be introduced in phases and documented only when actually present.
+Implemented foundation: pnpm/Turborepo, Next.js, NestJS, Prisma 6, PostgreSQL, Redis, Docker Compose, and automated CI. BullMQ and the clinic operation modules remain planned.
 
 ## Local development
 
-Requirements: Node.js 20.19+ and pnpm 10. Start with the steps in [Local environment](docs/ENVIRONMENT.md), then use `pnpm lint`, `pnpm typecheck`, and `pnpm build` for checks. API docs are served at `/api/docs`; the API health endpoint is `/api/v1/health`.
+Requirements: Node.js 20.19+, pnpm 10, and Docker Desktop. Follow [Local environment](docs/ENVIRONMENT.md) to configure a local `.env`, start the ArvanCloud-backed PostgreSQL and Redis containers, and apply migrations. Then run `pnpm dev`. API docs are served at `/api/docs`; the API health endpoint is `/api/v1/health`.
 
-The web app opens as an interactive preview at `http://localhost:3000`. It uses synthetic data saved to this browser only. Do not enter real patient information; authentication, API persistence, and tenant isolation are not implemented yet.
+The web app opens at `http://localhost:3000`. Its patient and appointment screens are still a browser-only preview using synthetic records saved in localStorage; they are not connected to the API yet. Do not enter real patient information.
 
 See [Architecture](docs/ARCHITECTURE.md), [Decisions](docs/DECISIONS.md), and [Roadmap](docs/ROADMAP.md).
 
 ## Security notice
 
-This project is not yet ready for real patient data or production use. Do not enter or upload personal, medical, or payment information until the security, authentication, tenant isolation, and operational controls described in the roadmap are implemented and verified.
+This project is not ready for production use. Authentication and tenant isolation have an initial implementation and database-backed checks, but web auth, scheduling, medical records, financial controls, audit history, backups, and production security review are still outstanding. Do not enter or upload real personal, medical, or payment information.

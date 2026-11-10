@@ -1,36 +1,42 @@
-﻿# Project Status
+# Project status
 
 Updated: 2026-11-10
 
 ## Current phase
 
-Phase 0 complete. Phase 1 foundation and an interactive browser-only preview are implemented. Formatting, lint, typecheck, build, and design-token checks pass. PostgreSQL/Redis startup remains pending Docker access.
+Phases 0–2 are complete. The SaaS foundation includes Prisma schema and migration with RLS, tenant-scoped transaction helper, membership and permission guard, auth lifecycle, and the first tenant-scoped patient endpoints. The migration is applied and database-backed checks pass locally. Phase 3 is next: connect the existing web experience to auth and patient APIs.
 
-## Workspace assessment
+## Available locally
 
-The workspace began as an initialized Git repository on `master` with no commits, remote, source files, or existing application. GitHub repository `amirhoseinbarkhordari/megap-clinic-os` now exists as a private repository with push access. Node.js v26.13.0 and pnpm 10.34.9 are available (pnpm executable may require a new terminal or its full path). Docker is installed but reports a permission error reading the user's Docker configuration and cannot connect to the engine.
+- Web demo preview at `http://localhost:3000` (synthetic records in browser storage only).
+- NestJS API source and Swagger at `/api/docs` once the API can connect to local PostgreSQL.
+- Docker Compose targets ArvanCloud's mirror for PostgreSQL and Redis; both services are healthy.
+- Private GitHub remote: `amirhoseinbarkhordari/megap-clinic-os`.
 
-## Deliverables
+## Completed work
 
-- [x] README and product/architecture/roadmap/decision/status documents.
-- [x] Monorepo manifests, Next.js RTL dashboard shell, NestJS API health endpoint, Compose services, CI workflow scaffold, and dependency lockfile.
-- [x] Dependency install, lint, typecheck, and production build.
-- [x] Web production server HTTP smoke check (200; Persian RTL markup).
-- [x] Built API health endpoint smoke check (200; `status: ok`).
-- [x] Interactive synthetic preview: dashboard, patients, appointments, local preview CRUD, search, filters, and status changes.
-- [ ] UI interaction and viewport review; use `http://localhost:3000` for manual preview.
-- [x] Initial foundation and interactive preview pushed to the private GitHub repository.
-- [ ] Docker-backed PostgreSQL/Redis startup and database-backed clinic workflows.
+- [x] Product, architecture, roadmap, environment, API, security, design, and UX documentation.
+- [x] pnpm/Turborepo monorepo, Next.js RTL preview, NestJS API, CI scaffold, and dependency lockfile.
+- [x] Prisma 6.19 schema for tenants, users, memberships, roles, permissions, branches, subscriptions, sessions, and patients.
+- [x] Initial PostgreSQL migration with tenant-aware foreign keys and forced RLS policies.
+- [x] Local PostgreSQL admin/runtime role split; API runs with the non-superuser runtime role.
+- [x] Atomic clinic-owner registration with first branch and 14-day trial, scrypt password hashing, short-lived access JWT, hashed rotating refresh sessions, and logout revocation.
+- [x] Global membership guard and transaction-local tenant context helper.
+- [x] Tenant-scoped patient list, search, detail, and create API with permission enforcement.
+- [x] Applied initial migration using the admin URL; API runtime uses a separate non-superuser role.
+- [x] RLS integration test passed with two isolated tenants.
+- [x] HTTP smoke passed: health, register, login, refresh rotation, and logout.
+- [x] Root formatting, lint, typecheck, production build, and design-token checks passed.
+- [x] API smoke passed: health, registration, patient create/list/search/detail, login, refresh rotation, and logout.
+- [ ] Push the current SaaS-core implementation to GitHub.
 
-## Blocking environment issues
+## Still required
 
-- Docker is installed but currently cannot read its user configuration or connect to the engine.
-- Git's metadata directory is not writable in the current sandbox, so local remote configuration, commits, and pushes require Git access escalation.
+- [ ] Build auth screens and connect the web UI to the tenant-scoped API.
+- [ ] Implement appointment scheduling, including database conflict constraints.
+- [ ] Complete scheduling, patient CRM, medical records, finance, inventory, patient portal, background jobs, and platform administration.
+- [ ] Production deployment, backup/restore validation, observability, security review, and end-to-end/browser testing.
 
-## Risks
+## Safety
 
-This is an interactive preview, not a production clinic system. Do not use it for real patient/medical/payment data. Preview records are synthetic and stored in browser localStorage. Authentication, API persistence, tenant isolation, database-backed booking protection, medical audit, and backups are not implemented.
-
-## Next
-
-The preview is available at `http://localhost:3000`. Next, implement persistent database-backed patient and appointment workflows with authentication and tenant isolation, then expand clinic operations.
+The current web preview contains synthetic sample entries and stores them in localStorage. The backend foundation has no complete patient workflow yet. Do not use this project for real medical, patient, or payment data.

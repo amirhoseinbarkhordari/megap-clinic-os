@@ -2,25 +2,27 @@ name: megap-clinic-os
 
 services:
   postgres:
-    image: postgres:16.6-alpine
+    image: docker.arvancloud.ir/postgres:16.6-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: megap
-      POSTGRES_USER: megap
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-megap_local_only}
+      POSTGRES_USER: megap_admin
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:-megap_admin_local_only}
+      MEGAP_APP_PASSWORD: ${MEGAP_APP_PASSWORD:-megap_app_local_only}
       TZ: Asia/Tehran
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U megap -d megap"]
+      test: ["CMD-SHELL", "pg_isready -U megap_admin -d megap"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   redis:
-    image: redis:7.4.2-alpine
+    image: docker.arvancloud.ir/redis:7.4.2-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:

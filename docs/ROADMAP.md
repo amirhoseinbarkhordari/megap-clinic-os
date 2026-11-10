@@ -8,15 +8,20 @@
 
 ## Phase 1 — Foundation
 
-- [ ] pnpm/Turborepo workspace and strict TypeScript.
-- [ ] Next.js web app and NestJS API.
-- [ ] Prisma/PostgreSQL and Redis configuration.
-- [ ] Docker development environment and health checks.
-- [ ] Environment example, CI, lint/typecheck/build.
+- [x] pnpm/Turborepo workspace and strict TypeScript.
+- [x] Next.js web app and NestJS API foundation.
+- [x] Prisma/PostgreSQL and Redis configuration.
+- [x] Docker development environment and health checks.
+- [x] Environment example, CI, lint/typecheck/build.
+- [x] Start local containers and apply migrations.
 
-## Phase 2 — SaaS core
+## Phase 2 — SaaS core (complete)
 
-Tenant, user, membership, role/permission, branch, subscription models; migrations; authentication; tenant-scoped APIs; RLS and cross-tenant tests.
+- [x] Tenant, user, membership, role/permission, branch, subscription, refresh-session, and patient foundation models.
+- [x] Initial migration with tenant-aware foreign keys and PostgreSQL RLS policies.
+- [x] Registration, login, logout, refresh rotation, and membership guard.
+- [x] Transaction-local tenant context helper.
+- [x] Apply migration and run cross-tenant integration test against a non-superuser database role.
 
 ## Phase 3 — Design system and shell
 
