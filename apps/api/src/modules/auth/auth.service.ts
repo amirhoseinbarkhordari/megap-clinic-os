@@ -75,6 +75,10 @@ export class AuthService {
           "records.manage",
           "consent.manage",
           "audit.read",
+          "finance.manage",
+          "finance.read",
+          "inventory.manage",
+          "inventory.read",
         ];
         await tx.permission.createMany({
           data: permissions.map((key) => ({ key, description: key })),
@@ -192,11 +196,22 @@ export class AuthService {
         select: {
           user: { select: { displayName: true, email: true, phone: true } },
           tenant: { select: { name: true, timezone: true, currency: true } },
-          role: { select: { name: true, key: true } },
+          role: {
+            select: {
+              name: true,
+              key: true,
+              permissions: { select: { permissionKey: true } },
+            },
+          },
         },
       });
       if (!membership) throw new UnauthorizedException("نشست معتبر نیست.");
-      return { ...membership.user, clinic: membership.tenant, role: membership.role };
+      return {
+        ...membership.user,
+        clinic: membership.tenant,
+        role: { name: membership.role.name, key: membership.role.key },
+        permissions: membership.role.permissions.map((permission) => permission.permissionKey),
+      };
     });
   }
 

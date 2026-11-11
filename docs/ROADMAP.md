@@ -38,9 +38,13 @@ Staff and service catalog APIs, patient CRM, appointment creation/list/status li
 - [x] Integration coverage for encryption, key rotation, tenant isolation, consent lifecycle, encounter lifecycle, and append-only data.
 - [ ] Patient-record UI, immutable addenda UX, private media/object storage, retention/export workflows, and security review.
 
-## Phase 6 — Finance and inventory
+## Phase 6 — Finance and inventory (MVP complete)
 
-Integer money ledger, idempotent payments, reversal flow, expenses, inventory movement, tests.
+- [x] Immutable invoices with multiple lines, integer Rial amounts, patient/appointment validation, and idempotent creation.
+- [x] Partial payments with per-invoice row locking, idempotency keys, overpayment protection, full payment reversal, expenses, immutable ledger, and income/expense summary.
+- [x] Branch-scoped product balances, low-stock alerts (including zero stock), purchase/consumption/adjustment movements, row-lock protection from negative stock, and movement idempotency.
+- [x] Finance and inventory workspace screens, tenant RLS, database constraints, append-only financial/stock records, and integration tests.
+- [ ] Supplier records/purchase orders, partial refunds, automatic treatment-consumption links, and finance/inventory browser workflow review.
 
 ## Phase 7 — Patient portal and communication
 

@@ -53,27 +53,59 @@ enum ConsentKind {
   COMMUNICATION
 }
 
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  ONLINE
+  OTHER
+}
+
+enum FinancialEntryKind {
+  PAYMENT
+  REFUND
+  EXPENSE
+}
+
+enum FinancialDirection {
+  INCOME
+  OUTGOING
+}
+
+enum InventoryMovementKind {
+  OPENING
+  PURCHASE
+  CONSUMPTION
+  ADJUSTMENT
+}
+
 model Tenant {
-  id            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name          String               @db.VarChar(160)
-  slug          String               @unique @db.VarChar(80)
-  status        TenantStatus         @default(ACTIVE)
-  timezone      String               @default("Asia/Tehran") @db.VarChar(64)
-  currency      String               @default("IRR") @db.VarChar(3)
-  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
-  memberships   Membership[]
-  branches      Branch[]
-  roles         Role[]
-  subscriptions TenantSubscription[]
-  patients      Patient[]
-  staff         Staff[]
-  services      ClinicService[]
-  appointments  Appointment[]
-  encounters    ClinicalEncounter[]
-  clinicalNotes ClinicalNote[]
-  consents      PatientConsent[]
-  auditEvents   AccessAudit[]
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String               @db.VarChar(160)
+  slug               String               @unique @db.VarChar(80)
+  status             TenantStatus         @default(ACTIVE)
+  timezone           String               @default("Asia/Tehran") @db.VarChar(64)
+  currency           String               @default("IRR") @db.VarChar(3)
+  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships        Membership[]
+  branches           Branch[]
+  roles              Role[]
+  subscriptions      TenantSubscription[]
+  patients           Patient[]
+  staff              Staff[]
+  services           ClinicService[]
+  appointments       Appointment[]
+  encounters         ClinicalEncounter[]
+  clinicalNotes      ClinicalNote[]
+  consents           PatientConsent[]
+  auditEvents        AccessAudit[]
+  invoices           Invoice[]
+  invoiceLines       InvoiceLine[]
+  financialEntries   FinancialEntry[]
+  products           InventoryProduct[]
+  inventoryBalances  InventoryBalance[]
+  inventoryMovements InventoryMovement[]
 
   @@map("tenants")
 }
@@ -96,19 +128,22 @@ model User {
 }
 
 model Membership {
-  id                    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId              String           @map("tenant_id") @db.Uuid
-  userId                String           @map("user_id") @db.Uuid
-  roleId                String           @map("role_id") @db.Uuid
-  status                MembershipStatus @default(ACTIVE)
-  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  user                  User             @relation(fields: [userId], references: [id], onDelete: Restrict)
-  role                  Role             @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict)
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String              @map("tenant_id") @db.Uuid
+  userId                String              @map("user_id") @db.Uuid
+  roleId                String              @map("role_id") @db.Uuid
+  status                MembershipStatus    @default(ACTIVE)
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  role                  Role                @relation(fields: [tenantId, roleId], references: [tenantId, id], onDelete: Restrict)
   sessions              RefreshSession[]
   clinicalNotesAuthored ClinicalNote[]
   consentsRecorded      PatientConsent[]
   auditEvents           AccessAudit[]
+  createdInvoices       Invoice[]
+  financialEntries      FinancialEntry[]
+  inventoryMovements    InventoryMovement[]
 
   @@unique([tenantId, userId])
   @@unique([tenantId, id])
@@ -151,15 +186,18 @@ model RolePermission {
 }
 
 model Branch {
-  id           String        @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String        @map("tenant_id") @db.Uuid
-  name         String        @db.VarChar(160)
-  isActive     Boolean       @default(true) @map("is_active")
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  patients     Patient[]
-  staff        Staff[]
-  appointments Appointment[]
+  id                 String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId           String              @map("tenant_id") @db.Uuid
+  name               String              @db.VarChar(160)
+  isActive           Boolean             @default(true) @map("is_active")
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant             Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patients           Patient[]
+  staff              Staff[]
+  appointments       Appointment[]
+  inventoryBalances  InventoryBalance[]
+  inventoryMovements InventoryMovement[]
+  financialEntries   FinancialEntry[]
 
   @@id([tenantId, id])
   @@unique([tenantId, name])
@@ -197,18 +235,20 @@ model RefreshSession {
 }
 
 model Patient {
-  id           String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId     String              @map("tenant_id") @db.Uuid
-  branchId     String?             @map("branch_id") @db.Uuid
-  fullName     String              @map("full_name") @db.VarChar(160)
-  phone        String?             @db.VarChar(32)
-  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
-  branch       Branch?             @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
-  appointments Appointment[]
-  encounters   ClinicalEncounter[]
-  consents     PatientConsent[]
-  auditEvents  AccessAudit[]
+  id               String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String              @map("tenant_id") @db.Uuid
+  branchId         String?             @map("branch_id") @db.Uuid
+  fullName         String              @map("full_name") @db.VarChar(160)
+  phone            String?             @db.VarChar(32)
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant           Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch           Branch?             @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  appointments     Appointment[]
+  encounters       ClinicalEncounter[]
+  consents         PatientConsent[]
+  auditEvents      AccessAudit[]
+  invoices         Invoice[]
+  financialEntries FinancialEntry[]
 
   @@id([tenantId, id])
   @@unique([tenantId, phone])
@@ -243,6 +283,7 @@ model ClinicService {
   createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   tenant          Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   appointments    Appointment[]
+  invoiceLines    InvoiceLine[]
 
   @@id([tenantId, id])
   @@index([tenantId, isActive, name])
@@ -267,12 +308,144 @@ model Appointment {
   staff     Staff              @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Restrict)
   service   ClinicService      @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Restrict)
   encounter ClinicalEncounter?
+  invoice   Invoice?
 
   @@id([tenantId, id])
   @@unique([tenantId, id, patientId, staffId])
   @@index([tenantId, startsAt])
   @@index([tenantId, patientId, startsAt])
   @@map("appointments")
+}
+
+model Invoice {
+  id                    String           @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String           @map("tenant_id") @db.Uuid
+  patientId             String           @map("patient_id") @db.Uuid
+  createdByMembershipId String           @map("created_by_membership_id") @db.Uuid
+  appointmentId         String?          @map("appointment_id") @db.Uuid
+  idempotencyKey        String           @map("idempotency_key") @db.VarChar(128)
+  totalRial             BigInt           @map("total_rial")
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient               Patient          @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
+  createdBy             Membership       @relation(fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  appointment           Appointment?     @relation(fields: [tenantId, appointmentId], references: [tenantId, id], onDelete: Restrict)
+  lines                 InvoiceLine[]
+  entries               FinancialEntry[]
+
+  @@id([tenantId, id])
+  @@unique([tenantId, appointmentId])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, patientId, createdAt])
+  @@map("invoices")
+}
+
+model InvoiceLine {
+  id            String         @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId      String         @map("tenant_id") @db.Uuid
+  invoiceId     String         @map("invoice_id") @db.Uuid
+  serviceId     String?        @map("service_id") @db.Uuid
+  description   String         @db.VarChar(240)
+  quantity      Int
+  unitPriceRial BigInt         @map("unit_price_rial")
+  lineTotalRial BigInt         @map("line_total_rial")
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invoice       Invoice        @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict)
+  service       ClinicService? @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Restrict)
+
+  @@id([tenantId, id])
+  @@index([tenantId, invoiceId])
+  @@map("invoice_lines")
+}
+
+model FinancialEntry {
+  id                    String             @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String             @map("tenant_id") @db.Uuid
+  patientId             String?            @map("patient_id") @db.Uuid
+  invoiceId             String?            @map("invoice_id") @db.Uuid
+  branchId              String?            @map("branch_id") @db.Uuid
+  createdByMembershipId String             @map("created_by_membership_id") @db.Uuid
+  kind                  FinancialEntryKind
+  direction             FinancialDirection
+  amountRial            BigInt             @map("amount_rial")
+  currency              String             @default("IRR") @db.VarChar(3)
+  paymentMethod         PaymentMethod?     @map("payment_method")
+  idempotencyKey        String             @map("idempotency_key") @db.VarChar(128)
+  reversesEntryId       String?            @map("reverses_entry_id") @db.Uuid
+  memo                  String?            @db.VarChar(500)
+  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  patient               Patient?           @relation(fields: [tenantId, patientId], references: [tenantId, id], onDelete: Restrict)
+  invoice               Invoice?           @relation(fields: [tenantId, invoiceId], references: [tenantId, id], onDelete: Restrict)
+  branch                Branch?            @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  createdBy             Membership         @relation(fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+  reverses              FinancialEntry?    @relation("FinancialReversal", fields: [tenantId, reversesEntryId], references: [tenantId, id], onDelete: Restrict)
+  reverseEntries        FinancialEntry[]   @relation("FinancialReversal")
+
+  @@id([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@unique([tenantId, reversesEntryId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, patientId, createdAt])
+  @@index([tenantId, invoiceId, createdAt])
+  @@map("financial_entries")
+}
+
+model InventoryProduct {
+  id           String              @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId     String              @map("tenant_id") @db.Uuid
+  sku          String?             @db.VarChar(80)
+  name         String              @db.VarChar(160)
+  category     String?             @db.VarChar(120)
+  unit         String              @default("unit") @db.VarChar(24)
+  reorderPoint Int                 @default(0) @map("reorder_point")
+  isActive     Boolean             @default(true) @map("is_active")
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant       Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  balances     InventoryBalance[]
+  movements    InventoryMovement[]
+
+  @@id([tenantId, id])
+  @@unique([tenantId, sku])
+  @@index([tenantId, isActive, name])
+  @@map("inventory_products")
+}
+
+model InventoryBalance {
+  tenantId       String           @map("tenant_id") @db.Uuid
+  branchId       String           @map("branch_id") @db.Uuid
+  productId      String           @map("product_id") @db.Uuid
+  quantityOnHand Int              @default(0) @map("quantity_on_hand")
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tenant         Tenant           @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch         Branch           @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  product        InventoryProduct @relation(fields: [tenantId, productId], references: [tenantId, id], onDelete: Restrict)
+
+  @@id([tenantId, branchId, productId])
+  @@map("inventory_balances")
+}
+
+model InventoryMovement {
+  id                    String                @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String                @map("tenant_id") @db.Uuid
+  branchId              String                @map("branch_id") @db.Uuid
+  productId             String                @map("product_id") @db.Uuid
+  createdByMembershipId String                @map("created_by_membership_id") @db.Uuid
+  kind                  InventoryMovementKind
+  quantityDelta         Int                   @map("quantity_delta")
+  unitCostRial          BigInt?               @map("unit_cost_rial")
+  idempotencyKey        String                @map("idempotency_key") @db.VarChar(128)
+  note                  String?               @db.VarChar(500)
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  branch                Branch                @relation(fields: [tenantId, branchId], references: [tenantId, id], onDelete: Restrict)
+  product               InventoryProduct      @relation(fields: [tenantId, productId], references: [tenantId, id], onDelete: Restrict)
+  createdBy             Membership            @relation(fields: [tenantId, createdByMembershipId], references: [tenantId, id], onDelete: Restrict)
+
+  @@id([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, branchId, productId, createdAt])
+  @@map("inventory_movements")
 }
 
 model ClinicalEncounter {

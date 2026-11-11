@@ -47,3 +47,27 @@ Routes are scoped beneath `/patients/:patientId/records` and require an authenti
 - `GET /patients/:patientId/records/audit` reads the latest 100 patient access events (`audit.read`). Audit records are append-only.
 
 Set `MEGAP_PHI_ENCRYPTION_KEYS` to a JSON object mapping key versions to base64-encoded 32-byte keys and `MEGAP_PHI_ACTIVE_KEY_VERSION` to the key used for new notes. Keep old keys available until every note encrypted under them has been re-encrypted through a separately reviewed rotation job. Missing or invalid key configuration prevents API startup.
+
+## Finance
+
+All stored money uses integer Rial. API amounts are decimal strings so they are safe beyond JavaScript's integer range. Finance routes require the corresponding `finance.read` or `finance.manage` permission.
+
+- `GET /finance/patients` returns a bounded patient picker for invoice entry (`finance.read`).
+- `GET /finance/invoices?limit=100&from=&to=` lists recent immutable invoices with lines, paid amount, balance, and derived status (`finance.read`).
+- `POST /finance/invoices` creates a fixed invoice with 1–100 lines, optional same-patient appointment link, and an `idempotencyKey`. Retrying the same key and payload returns the same invoice; reuse with a different payload conflicts.
+- `POST /finance/payments` records a partial or full payment with `invoiceId`, integer string `amountRial`, `paymentMethod`, and `idempotencyKey`. Invoice-row locking and a deferred database constraint prevent overpayment under concurrency.
+- `POST /finance/refunds` fully reverses one payment with a new idempotency key. Partial refunds are not supported yet; a payment can be reversed only once.
+- `POST /finance/expenses` records an outgoing expense with description, integer string amount, payment method, optional branch, and idempotency key.
+- `GET /finance/ledger?limit=100&from=&to=` reads append-only financial entries. `GET /finance/summary?from=&to=` returns income, outgoings, and net in Rial.
+
+Invoices, invoice lines, and financial entries cannot be updated or deleted. Refunds are new outgoing entries linked to the original payment. Invoice totals must equal line totals, payment entries must match invoice balances, and financial rows are tenant-scoped with forced RLS. The interface keeps retry keys in memory for the current page session.
+
+## Inventory
+
+- `GET /inventory/branches` returns active branches (`inventory.read`).
+- `GET /inventory/products?branchId=&limit=100` returns active products and branch balances; zero-stock branches are included in low-stock reporting.
+- `POST /inventory/products` adds a product with optional clinic-unique SKU, unit, category, and reorder point (`inventory.manage`).
+- `POST /inventory/movements` records `OPENING`, `PURCHASE`, `CONSUMPTION`, or `ADJUSTMENT`, with branch, product, non-zero integer quantity delta, optional integer string unit cost, and an idempotency key.
+- `GET /inventory/movements?branchId=&limit=100` lists the latest append-only movements with actor and branch (`inventory.read`).
+
+Stock balance is updated by a database trigger in the same transaction as the movement. Row locking and a non-negative database constraint prevent concurrent consumption from taking stock below zero. Purchase orders/suppliers and automatic treatment consumption are not implemented yet.

@@ -607,6 +607,308 @@ p {
   }
 }
 
+.workspace-nav-extra {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+.finance-page .records-topline nav {
+  display: flex;
+  gap: 8px;
+}
+.finance-page .records-topline nav a {
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+}
+.finance-page .records-topline nav a[aria-current="page"] {
+  border-color: #c9ddd4;
+  background: var(--green-soft);
+  color: var(--green);
+}
+.finance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.finance-summary article {
+  display: grid;
+  gap: 6px;
+  padding: 17px 20px;
+  border-inline-start: 2px solid var(--gold);
+}
+.finance-summary article span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.finance-summary article strong {
+  font-size: clamp(16px, 2.2vw, 21px);
+  direction: rtl;
+  overflow-wrap: anywhere;
+}
+.finance-grid,
+.inventory-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.8fr);
+  align-items: start;
+  gap: 18px;
+}
+.finance-grid .records-side-column,
+.inventory-side-column {
+  min-width: 0;
+}
+.finance-form,
+.finance-payment-form {
+  display: grid;
+  gap: 8px;
+}
+.finance-form label,
+.finance-payment-form label {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.finance-form :is(input, select),
+.finance-payment-form :is(input, select) {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+}
+.finance-form input:focus-visible,
+.finance-form select:focus-visible,
+.finance-payment-form :is(input, select):focus-visible {
+  outline: 3px solid rgb(199 166 106 / 55%);
+  outline-offset: 2px;
+}
+.finance-form button,
+.finance-payment-form button {
+  justify-self: start;
+  margin-top: 7px;
+}
+.finance-list-heading {
+  margin-top: 28px;
+}
+.finance-invoice-list,
+.finance-ledger-list,
+.inventory-product-list,
+.inventory-movement-list {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.finance-invoice-list > li,
+.inventory-product-list > li {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+.finance-invoice-head,
+.inventory-product-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.finance-invoice-head > div,
+.inventory-product-head > div {
+  display: grid;
+  gap: 2px;
+}
+.finance-invoice-head strong,
+.inventory-product-head strong {
+  font-size: 13px;
+}
+.finance-invoice-head span:not(.records-status),
+.inventory-product-head span,
+.inventory-product-head small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.finance-line-list {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+.finance-line-list li,
+.finance-total-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 11px;
+}
+.finance-line-list li span {
+  overflow-wrap: anywhere;
+}
+.finance-line-list b {
+  flex: 0 0 auto;
+}
+.finance-total-line {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.finance-total-line + .finance-total-line {
+  margin-top: 7px;
+}
+.finance-total-line strong {
+  font-size: 13px;
+}
+.finance-action {
+  min-height: 38px;
+  margin-top: 12px;
+}
+.finance-payment-form {
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid var(--line);
+}
+.finance-payment-form label {
+  grid-column: 1 / -1;
+}
+.finance-payment-form button {
+  grid-column: auto;
+  margin: 0;
+}
+.finance-ledger-list li,
+.inventory-movement-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 10px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.finance-ledger-list li > div,
+.inventory-movement-list li > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.finance-ledger-list li strong,
+.inventory-movement-list li strong {
+  font-size: 12px;
+}
+.finance-ledger-list li span,
+.finance-ledger-list li time,
+.inventory-movement-list li span,
+.inventory-movement-list li time {
+  color: var(--muted);
+  font-size: 10px;
+}
+.finance-ledger-list li > b,
+.inventory-movement-list li > b {
+  font-size: 11px;
+  white-space: nowrap;
+}
+.is-income {
+  color: var(--green);
+}
+.is-outgoing {
+  color: var(--danger);
+}
+.finance-refund-confirm {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #ead6d2;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  font-size: 11px;
+}
+.finance-refund-confirm span {
+  flex-basis: 100%;
+  color: var(--danger) !important;
+}
+.finance-refund-confirm .button {
+  min-height: 36px;
+}
+.inventory-grid {
+  grid-template-columns: minmax(0, 1.4fr) minmax(290px, 0.85fr);
+}
+.inventory-main-column {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.inventory-product-list > li {
+  display: grid;
+  gap: 13px;
+}
+.inventory-branch-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.inventory-branch-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+}
+.inventory-branch-list em {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 10px;
+  font-style: normal;
+}
+.inventory-movement-list li b {
+  direction: rtl;
+}
+@media (max-width: 760px) {
+  .finance-summary {
+    grid-template-columns: 1fr;
+  }
+  .finance-summary article {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .finance-grid,
+  .inventory-grid {
+    grid-template-columns: 1fr;
+  }
+  .finance-payment-form {
+    grid-template-columns: 1fr;
+  }
+  .finance-payment-form label,
+  .finance-payment-form button {
+    grid-column: auto;
+  }
+}
+@media (forced-colors: active) {
+  .finance-summary article,
+  .inventory-branch-list li,
+  .finance-invoice-list > li,
+  .inventory-product-list > li {
+    border: 1px solid CanvasText;
+  }
+}
+
 /* Interactive clinic preview */
 .app-shell {
   display: flex;

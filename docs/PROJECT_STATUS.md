@@ -4,9 +4,9 @@ Updated: 2026-11-11
 
 ## Current phase
 
-Phases 0–2 are complete. Phase 3 includes registration, login, and an authenticated patient workspace. Phase 4 includes tenant-scoped staff/service APIs and a basic appointment workflow; PostgreSQL prevents overlapping appointments per staff member. Phase 5 now has a secure medical-record API foundation with encrypted notes, consent lifecycle, and append-only access auditing. Database-backed tenant isolation, concurrent booking, clinical records, consent, and crypto checks pass locally.
+Phases 0–2 are complete. Phase 3 includes registration, login, and an authenticated patient workspace. Phase 4 includes tenant-scoped staff/service APIs and a basic appointment workflow; PostgreSQL prevents overlapping appointments per staff member. Phase 5 includes an encrypted clinical-record API and UI, consent lifecycle, and append-only access audit. Phase 6 now includes finance and branch inventory APIs and workspace screens with integer Rial ledger entries, idempotent invoicing/payments, full refunds, expenses, and concurrency-safe stock movements. Database-backed tenant isolation, concurrent booking, medical records, finance, inventory, and crypto checks pass locally.
 
-Working-hour calendars, rescheduling, patient-record UI, private media, finance, inventory, patient portal, background jobs, SaaS administration, and production readiness remain open. This is not yet a production-ready clinic system.
+Working-hour calendars, rescheduling, private medical media, suppliers and purchase orders, partial refunds, treatment-linked inventory consumption, patient portal, background jobs, SaaS administration, and production readiness remain open. This is not yet a production-ready clinic system.
 
 ## Available locally
 
@@ -27,13 +27,16 @@ Working-hour calendars, rescheduling, patient-record UI, private media, finance,
 - [x] PostgreSQL appointment time ordering and concurrent staff overlap protection.
 - [x] Tenant-scoped clinical encounters, encrypted note storage, consent lifecycle, and append-only patient access audit.
 - [x] Medical-record migration constraints, RLS, versioned PHI encryption key configuration, and API integration coverage.
+- [x] Immutable invoice/line and integer Rial ledger schema, idempotent invoice/payment/expense operations, full refund reversal, reports, RLS, and finance UI.
+- [x] Branch-scoped inventory products, balances, zero-stock alerts, atomic stock-movement trigger, idempotency, RLS, and inventory UI.
+- [x] Finance and inventory concurrency, idempotency, append-only, branch isolation, and tenant isolation integration coverage.
 - [x] Push SaaS-core and scheduling milestones to GitHub (`master`).
 
 ## Remaining work
 
 - [ ] Staff working hours, holidays, and appointment rescheduling.
 - [ ] Patient-record UI, private media/object storage, and reviewed retention/export workflows.
-- [ ] Finance ledger, idempotent payments, reversals, expenses, inventory, and reporting.
+- [ ] Supplier/purchase-order workflows, partial refunds, and automatic inventory consumption from treatments.
 - [ ] Patient portal, notification/SMS provider boundary, and background jobs.
 - [ ] Membership administration, subscription limits/lifecycle, and platform administration.
 - [ ] Password recovery, phone/email verification, MFA, rate limiting, and device session management.

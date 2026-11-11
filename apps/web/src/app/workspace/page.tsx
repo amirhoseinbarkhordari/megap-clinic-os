@@ -407,13 +407,21 @@ export default function WorkspacePage() {
           <span className="workspace-nav-current" aria-current="page">
             <span aria-hidden="true">◉</span> مراجعان
           </span>
-          <Link className="workspace-nav-unavailable" href="#schedule-title">
+          <Link className="workspace-nav-unavailable" href="/workspace#schedule-title">
             <span aria-hidden="true">◷</span> نوبت‌دهی
           </Link>
           <span className="workspace-nav-unavailable" aria-disabled="true">
             <span aria-hidden="true">▤</span> پرونده‌ی درمان <small>به‌زودی</small>
           </span>
         </nav>
+        <div className="workspace-nav-extra">
+          <Link className="workspace-nav-unavailable" href="/workspace/finance">
+            مدیریت مالی
+          </Link>
+          <Link className="workspace-nav-unavailable" href="/workspace/inventory">
+            انبار
+          </Link>
+        </div>
         <div className="rail-bottom">
           <span className="workspace-secure-note">
             <i aria-hidden="true" /> فضای اختصاصی کلینیک

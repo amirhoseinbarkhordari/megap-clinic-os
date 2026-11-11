@@ -23,6 +23,7 @@ export type UserProfile = {
   phone: string | null;
   clinic: { name: string; timezone: string; currency: string };
   role: { name: string; key: string };
+  permissions: string[];
 };
 
 type AuthStatus = "restoring" | "authenticated" | "anonymous";
