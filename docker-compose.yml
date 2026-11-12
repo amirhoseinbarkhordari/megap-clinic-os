@@ -35,6 +35,51 @@ services:
       timeout: 3s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-docker.arvancloud.ir/node:22-bookworm-slim}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      API_PORT: 4000
+      WEB_ORIGIN: http://localhost:3000
+      # Local HTTP demo only: the refresh cookie cannot be Secure over plain http.
+      COOKIE_SECURE: "false"
+      DATABASE_URL: postgresql://megap_app:${MEGAP_APP_PASSWORD:-megap_app_local_only}@postgres:5432/megap?schema=public
+      DIRECT_URL: postgresql://megap_admin:${POSTGRES_ADMIN_PASSWORD:-megap_admin_local_only}@postgres:5432/megap?schema=public
+      # Optional overrides; when empty the entrypoint generates and persists local secrets.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-}
+      MEGAP_PHI_ENCRYPTION_KEYS: ${MEGAP_PHI_ENCRYPTION_KEYS:-}
+      MEGAP_PHI_ACTIVE_KEY_VERSION: ${MEGAP_PHI_ACTIVE_KEY_VERSION:-v1}
+      TZ: Asia/Tehran
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - api_secrets:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-docker.arvancloud.ir/node:22-bookworm-slim}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      TZ: Asia/Tehran
+    ports:
+      - "127.0.0.1:3000:3000"
+
 volumes:
   postgres_data:
   redis_data:
+  api_secrets:

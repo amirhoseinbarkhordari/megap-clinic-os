@@ -8,7 +8,9 @@ import { CurrentTenant, Public, TenantPrincipal } from "./tenant-context";
 const COOKIE_NAME = "megap_refresh";
 const cookieOptions = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
+  secure: process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === "true"
+    : process.env.NODE_ENV === "production",
   sameSite: "strict" as const,
   path: "/api/v1/auth",
   maxAge: 30 * 24 * 60 * 60 * 1000,
