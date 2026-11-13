@@ -18,4 +18,4 @@ Server-side authorization on every endpoint, tenant-aware constraints plus RLS, 
 
 ## Status
 
-This is a planning artifact. No mitigations are currently implemented or verified.
+Planning artifact, partly implemented: tenant isolation (RLS), PHI encryption, append-only audit and refresh-session hashing exist; rate limiting, account recovery, MFA, object-storage controls and independent review are still open (see PROJECT_AUDIT.md). Mitigation status is not independently verified.

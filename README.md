@@ -9,7 +9,7 @@ MEGAP Clinic OS is a Persian-first, RTL clinic operations platform for beauty an
 - API-first modular monolith; PostgreSQL as source of truth.
 - Sensitive medical and financial records require explicit authorization and auditability.
 
-## Planned stack
+## Stack
 
 Implemented foundation: pnpm/Turborepo, Next.js, NestJS, Prisma 6, PostgreSQL, Redis, Docker Compose, and automated CI. BullMQ and the clinic operation modules remain planned.
 

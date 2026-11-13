@@ -26,3 +26,48 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm build
+
+  integration:
+    runs-on: ubuntu-latest
+    needs: quality
+    services:
+      postgres:
+        image: postgres:16.6-alpine
+        env:
+          POSTGRES_DB: megap
+          POSTGRES_USER: megap_admin
+          POSTGRES_PASSWORD: megap_admin_ci_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U megap_admin -d megap"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      NODE_ENV: test
+      JWT_ACCESS_SECRET: ci-only-jwt-secret-at-least-32-characters-long
+      MEGAP_PHI_ACTIVE_KEY_VERSION: v1
+      DATABASE_URL: postgresql://megap_app:megap_app_ci_only@localhost:5432/megap?schema=public
+      DIRECT_URL: postgresql://megap_admin:megap_admin_ci_only@localhost:5432/megap?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create runtime database role
+        run: |
+          psql "postgresql://megap_admin:megap_admin_ci_only@localhost:5432/megap" \
+            --set=ON_ERROR_STOP=1 --set=app_password=megap_app_ci_only \
+            --file=infrastructure/docker/postgres-init/01-runtime-role.sql.template
+      - name: Apply migrations
+        run: pnpm --filter @megap/api exec prisma migrate deploy
+      - name: Integration tests
+        run: |
+          export MEGAP_PHI_ENCRYPTION_KEYS="{\"v1\":\"$(head -c 32 /dev/urandom | base64)\"}"
+          pnpm --filter @megap/api exec tsx --test test/tenant-isolation.test.ts test/scheduling-invariants.test.ts test/phi-crypto.test.ts test/medical-records.test.ts test/finance-inventory.test.ts

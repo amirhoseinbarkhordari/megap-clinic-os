@@ -2,7 +2,7 @@
 
 ## Current state
 
-Phase 0 documentation only. No runtime, database, authentication, or clinic workflows are implemented yet.
+Status: see PROJECT_STATUS.md. The tenant model, auth, scheduling, medical records, finance and inventory described here are implemented; remaining items are listed in ROADMAP.md.
 
 ## Target architecture
 
@@ -14,7 +14,7 @@ Identity and access; tenant/clinic; staff; patient CRM; scheduling; services; me
 
 ## Tenant isolation strategy
 
-Authentication identifies the user. A server-side membership lookup establishes the tenant context; client-supplied tenant IDs are selectors only and must be checked against that membership. Every tenant-owned query and mutation is scoped by the resolved tenant. Tenant-aware foreign keys/unique constraints prevent cross-tenant relationships. PostgreSQL RLS is an additional enforcement layer for tenant-owned tables, with transaction-local tenant context set only by trusted server code. Background jobs carry tenant IDs from persisted, validated records and establish the same database context. Exports, object access, search, and reporting use identical scopes. This strategy is planned, not yet implemented or tested.
+Authentication identifies the user. A server-side membership lookup establishes the tenant context; client-supplied tenant IDs are selectors only and must be checked against that membership. Every tenant-owned query and mutation is scoped by the resolved tenant. Tenant-aware foreign keys/unique constraints prevent cross-tenant relationships. PostgreSQL RLS is an additional enforcement layer for tenant-owned tables, with transaction-local tenant context set only by trusted server code. Background jobs carry tenant IDs from persisted, validated records and establish the same database context. Exports, object access, search, and reporting use identical scopes. This strategy is implemented (forced RLS, composite tenant FKs) and covered by `apps/api/test/tenant-isolation.test.ts`, which requires a migrated PostgreSQL.
 
 ## API
 
