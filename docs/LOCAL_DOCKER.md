@@ -3,7 +3,15 @@
 > Status: files written but **not executed** by the author (no Docker daemon/network in the authoring sandbox). If a build step fails, send the error output.
 > فقط برای نمایش محلی با داده‌های ساختگی؛ برای داده واقعی بیمار یا پرداخت استفاده نکنید.
 
-## اجرا
+## اجرا (ساده‌ترین راه)
+```bash
+./start-local.sh          # ساخت و اجرا و انتظار تا آماده شدن
+./start-local.sh logs     # لاگ‌ها
+./start-local.sh down     # توقف
+./start-local.sh reset    # حذف همه داده‌ها و شروع تازه (با تأیید)
+```
+
+## اجرا (دستی)
 ```bash
 docker compose up --build
 ```
